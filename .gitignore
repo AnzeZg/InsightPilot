@@ -9,8 +9,8 @@ dist/
 build/
 
 # Virtual environments
-.venv/
 venv/
+.venv/
 ENV/
 env/
 
@@ -35,6 +35,7 @@ alembic/versions/*.pyc
 # Logs
 *.log
 app.log*
+logs/
 
 # Testing
 .pytest_cache/

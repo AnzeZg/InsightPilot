@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: insightpilot_db
+    environment:
+      POSTGRES_DB: insightpilot
+      POSTGRES_USER: insight
+      POSTGRES_PASSWORD: insight
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U insight -d insightpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    networks:
+      - insightpilot_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: insightpilot_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: dev
+      SECRET_KEY: "dev-secret-key-change-in-production"
+      SESSION_COOKIE_NAME: ip_session
+      DATABASE_URL: postgresql+psycopg2://insight:insight@db:5432/insightpilot
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount source code for hot-reload during development
+      - ./app:/app/app:rw
+      - ./alembic:/app/alembic:rw
+      - ./alembic.ini:/app/alembic.ini:ro
+    networks:
+      - insightpilot_network
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+volumes:
+  pgdata:
+    name: insightpilot_pgdata
+
+networks:
+  insightpilot_network:
+    name: insightpilot_network
+    driver: bridge
+

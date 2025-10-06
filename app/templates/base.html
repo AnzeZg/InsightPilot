@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}InsightPilot{% endblock %}</title>
+
+    <!-- Tailwind CSS (CDN for Day 1, will switch to local build later) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- HTMX for progressive enhancement -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+    <!-- Custom styles -->
+    <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}" />
+
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
+    <!-- Header -->
+    <header class="border-b bg-white shadow-sm">
+      <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between">
+          <a href="/" class="text-2xl font-bold text-blue-600 hover:text-blue-700">
+            InsightPilot
+          </a>
+          <nav class="flex items-center space-x-4">
+            {% block nav %}{% endblock %}
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t bg-white">
+      <div class="mx-auto max-w-7xl px-4 py-6 text-center text-sm text-gray-600">
+        <p>&copy; 2025 InsightPilot. AI-driven market research platform.</p>
+      </div>
+    </footer>
+
+    <!-- Custom scripts -->
+    <script src="{{ url_for('static', path='js/app.js') }}"></script>
+    {% block extra_scripts %}{% endblock %}
+  </body>
+</html>
+
