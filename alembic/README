@@ -1,0 +1,45 @@
+Alembic Migrations (InsightPilot)
+
+Scope
+- This directory contains database schema migrations for InsightPilot.
+- Migrations are ordered Python scripts under `alembic/versions/` with `upgrade()` and `downgrade()` functions.
+
+Configuration
+- `alembic.ini`: Base config; DB URL is not hardcoded. It is provided at runtime by `alembic/env.py`.
+- `alembic/env.py`: Binds Alembic to the application by:
+  - Importing `app.db.base.Base` and all models from `app.models` for autogenerate.
+  - Reading the database URL from `app.settings.settings.database_url`.
+  - Configuring online/offline migration modes.
+- `script.py.mako`: Template for generated migration files (revision metadata + upgrade/downgrade stubs).
+
+Standard Commands
+- Create a new revision from model diffs (review before applying):
+  alembic revision --autogenerate -m "<change-summary>"
+
+- Apply pending migrations to the current database:
+  alembic upgrade head
+
+- Roll back the last migration:
+  alembic downgrade -1
+
+- Show current DB revision:
+  alembic current
+
+Environment
+- Local development: ensure a PostgreSQL instance is reachable using `DATABASE_URL` from `.env`.
+- Docker compose: the `app` service runs `alembic upgrade head` on start; `DATABASE_URL` targets the `db` service.
+
+Conventions
+- Keep migrations minimal and deterministic; prefer server defaults for timestamps (e.g., `now()`).
+- Use explicit indexes and uniqueness constraints where required by query paths.
+- For Postgres JSON/ENUM changes, review autogenerate output and adjust manually when needed.
+- Do not edit applied migrations retroactively; add a new migration for follow-up changes.
+
+Initial Schema
+- Revision `001_initial_schema.py` establishes: users, sessions, studies, study_questions, invites, interviews, interviewees, messages, insights, with appropriate FKs, cascades, and indexes.
+
+Notes
+- Autogenerate requires imports of all model modules in `alembic/env.py` (`from app.models import ...`).
+- If the DB is unavailable, revision autogenerate may fail; you can create a manual revision and fill `upgrade()`/`downgrade()` explicitly.
+
+Generic single-database configuration.
