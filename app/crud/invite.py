@@ -1,7 +1,7 @@
 """CRUD operations for Invite model."""
 
 import secrets
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -66,7 +66,7 @@ def is_invite_valid(invite: Invite) -> bool:
     """Check if invite is valid (not expired, not completed)."""
     if invite.status == InviteStatus.COMPLETED.value:
         return False
-    if invite.expires_at and invite.expires_at < datetime.utcnow():
+    if invite.expires_at and invite.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
         return False
     return True
 

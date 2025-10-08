@@ -1,8 +1,8 @@
 """Study-related models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -19,7 +19,7 @@ class Study(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     consent_text: Mapped[str] = mapped_column(Text, nullable=False)
     max_agent_turns: Mapped[int] = mapped_column(Integer, default=9, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now(), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
 
     # Relationships
     owner: Mapped["User"] = relationship("User", back_populates="studies")  # type: ignore

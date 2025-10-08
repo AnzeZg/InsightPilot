@@ -1,6 +1,6 @@
 """Invite model."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
@@ -27,8 +27,8 @@ class Invite(Base):
     invite_code: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
     interviewee_email: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[str] = mapped_column(String(20), default=InviteStatus.CREATED.value, nullable=False)
-    expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default="now()", nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
 
     # Relationships
     study: Mapped["Study"] = relationship("Study", back_populates="invites")  # type: ignore

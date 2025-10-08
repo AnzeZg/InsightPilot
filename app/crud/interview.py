@@ -1,6 +1,6 @@
 """CRUD operations for Interview, Interviewee, Message, and Insight models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -50,7 +50,7 @@ def complete_interview(db: Session, interview_id: int) -> Interview | None:
     """Mark interview as completed."""
     interview = db.get(Interview, interview_id)
     if interview:
-        interview.completed_at = datetime.utcnow()
+        interview.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.commit()
         db.refresh(interview)
     return interview

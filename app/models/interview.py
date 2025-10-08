@@ -1,6 +1,6 @@
 """Interview-related models."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -19,8 +19,8 @@ class Interview(Base):
     invite_id: Mapped[int] = mapped_column(
         ForeignKey("invites.id", ondelete="CASCADE"), unique=True, nullable=False
     )
-    started_at: Mapped[datetime] = mapped_column(DateTime, server_default="now()", nullable=False)
-    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     agent_turns: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     # Relationships
@@ -52,7 +52,7 @@ class Interviewee(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     demographics_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    consent_at: Mapped[datetime] = mapped_column(DateTime, server_default="now()", nullable=False)
+    consent_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
 
     # Relationships
     interview: Mapped["Interview"] = relationship("Interview", back_populates="interviewee")
@@ -70,7 +70,7 @@ class Message(Base):
     interview_id: Mapped[int] = mapped_column(ForeignKey("interviews.id", ondelete="CASCADE"), index=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False)  # 'agent', 'user', 'system'
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default="now()", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
 
     # Relationships
     interview: Mapped["Interview"] = relationship("Interview", back_populates="messages")
@@ -92,7 +92,7 @@ class Insight(Base):
     sentiment: Mapped[str] = mapped_column(String(20), nullable=False)  # 'pos', 'neu', 'neg'
     keywords_json: Mapped[list] = mapped_column(JSON, nullable=False)
     quotes_json: Mapped[list] = mapped_column(JSON, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default="now()", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
 
     # Relationships
     interview: Mapped["Interview"] = relationship("Interview", back_populates="insight")
