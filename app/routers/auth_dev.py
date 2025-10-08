@@ -86,7 +86,7 @@ def dev_login(
     session = session_crud.create_session(db, user.id)
     
     # Set cookie
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/app/studies", status_code=status.HTTP_303_SEE_OTHER)
     set_session(response, session.id)
     
     return response
@@ -133,7 +133,7 @@ def dev_quick_auth(db: Session = Depends(get_db)):
     session = session_crud.create_session(db, user.id)
     
     # Set cookie and redirect to studies
-    response = RedirectResponse(url="/studies", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/app/studies", status_code=status.HTTP_303_SEE_OTHER)
     set_session(response, session.id)
     
     return response

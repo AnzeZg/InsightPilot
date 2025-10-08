@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.middleware import RequestIDMiddleware
-from app.routers import auth_dev, health, studies, web
+from app.routers import auth_dev, health, studies, web, web_studies
 from app.settings import settings
 from app.utils.logging import configure_logging
 
@@ -48,7 +48,8 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Include routers
 app.include_router(health.router)
 app.include_router(web.router)
-app.include_router(studies.router)
+app.include_router(studies.router)  # API routes for studies (JSON) - include first for priority
+app.include_router(web_studies.router)  # HTML rendering for studies
 
 # Dev-only auth routes (disabled in production)
 if settings.is_development:

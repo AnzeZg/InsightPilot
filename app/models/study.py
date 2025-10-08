@@ -19,7 +19,7 @@ class Study(Base):
     description: Mapped[str] = mapped_column(Text, nullable=False)
     consent_text: Mapped[str] = mapped_column(Text, nullable=False)
     max_agent_turns: Mapped[int] = mapped_column(Integer, default=9, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
 
     # Relationships
     owner: Mapped["User"] = relationship("User", back_populates="studies")  # type: ignore

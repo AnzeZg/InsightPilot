@@ -52,7 +52,7 @@ async def test_dev_login_success(client: AsyncClient, test_user):
     )
     
     assert response.status_code == 303  # Redirect
-    assert response.headers["location"] == "/"
+    assert response.headers["location"] == "/app/studies"
     assert "set-cookie" in response.headers
 
 
@@ -103,7 +103,7 @@ async def test_dev_quick_auth(client: AsyncClient):
     )
     
     assert response.status_code == 303
-    assert response.headers["location"] == "/studies"
+    assert response.headers["location"] == "/app/studies"
     assert "set-cookie" in response.headers
 
 
