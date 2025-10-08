@@ -159,3 +159,4 @@ async def test_create_study_validation(authenticated_client: AsyncClient):
     
     assert response.status_code == 422  # Validation error
 
+

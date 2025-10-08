@@ -133,3 +133,4 @@ async def test_invites_isolated_by_study(authenticated_client: AsyncClient):
     study2_invites = await authenticated_client.get(f"/studies/{study2_id}/invites")
     assert len(study2_invites.json()) == 0
 
+
