@@ -1,0 +1,184 @@
+{% extends "researcher_base.html" %}
+
+{% block title %}{{ study.title }} - InsightPilot{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-0">
+    <!-- Header with Actions -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <a href="/app/studies" class="text-sm text-indigo-600 hover:text-indigo-800 mb-2 inline-flex items-center">
+                    <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Back to Studies
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900 mt-2">{{ study.title }}</h1>
+                <p class="mt-2 text-gray-600">{{ study.description }}</p>
+            </div>
+            <div class="ml-4 flex space-x-3">
+                <button onclick="document.getElementById('edit-modal').classList.remove('hidden')" 
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Edit
+                </button>
+                <button onclick="if(confirm('Delete this study?')) document.getElementById('delete-form').submit()" 
+                        class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
+                    Delete
+                </button>
+            </div>
+        </div>
+        <form id="delete-form" action="/app/studies/{{ study.id }}" method="POST" class="hidden">
+            <input type="hidden" name="method" value="DELETE">
+        </form>
+    </div>
+
+    <!-- Study Details Card -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Study Details</h3>
+        </div>
+        <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+            <dl class="sm:divide-y sm:divide-gray-200">
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Max Agent Turns</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ study.max_agent_turns }}</dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Created</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ study.created_at.strftime('%B %d, %Y at %I:%M %p') }}</dd>
+                </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-500">Consent Text</dt>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ study.consent_text }}</dd>
+                </div>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Questions Section -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg mb-6">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Seed Questions</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Questions that guide the interview</p>
+            </div>
+            <button onclick="document.getElementById('question-modal').classList.remove('hidden')" 
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Question
+            </button>
+        </div>
+        <div id="questions-container" class="border-t border-gray-200">
+            {% include 'studies/_questions.html' %}
+        </div>
+    </div>
+
+    <!-- Invites Section -->
+    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Invites</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Generate invite links for participants</p>
+            </div>
+            <button hx-post="/app/studies/{{ study.id }}/invites" 
+                    hx-target="#invites-container" 
+                    hx-swap="innerHTML"
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Generate Invite
+            </button>
+        </div>
+        <div id="invites-container" class="border-t border-gray-200">
+            {% include 'studies/_invites.html' %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Question Modal -->
+<div id="question-modal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('question-modal').classList.add('hidden')"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <form hx-post="/app/studies/{{ study.id }}/questions" 
+                  hx-target="#questions-container" 
+                  hx-swap="innerHTML"
+                  hx-on::after-request="document.getElementById('question-modal').classList.add('hidden'); document.getElementById('question-text').value='';">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Add Seed Question</h3>
+                    <div>
+                        <label for="question-text" class="block text-sm font-medium text-gray-700">Question Text</label>
+                        <textarea name="text" id="question-text" rows="3" required 
+                                  class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                  placeholder="e.g., What features would you like to see in our product?"></textarea>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="submit" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
+                        Add Question
+                    </button>
+                    <button type="button" onclick="document.getElementById('question-modal').classList.add('hidden')" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Study Modal -->
+<div id="edit-modal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('edit-modal').classList.add('hidden')"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <form action="/app/studies/{{ study.id }}" method="POST">
+                <input type="hidden" name="method" value="PATCH">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Edit Study</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
+                            <input type="text" name="title" id="edit-title" value="{{ study.title }}" required 
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                        <div>
+                            <label for="edit-description" class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea name="description" id="edit-description" rows="3" required 
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ study.description }}</textarea>
+                        </div>
+                        <div>
+                            <label for="edit-consent_text" class="block text-sm font-medium text-gray-700">Consent Text</label>
+                            <textarea name="consent_text" id="edit-consent_text" rows="3" required 
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ study.consent_text }}</textarea>
+                        </div>
+                        <div>
+                            <label for="edit-max_agent_turns" class="block text-sm font-medium text-gray-700">Max Agent Turns</label>
+                            <input type="number" name="max_agent_turns" id="edit-max_agent_turns" value="{{ study.max_agent_turns }}" min="1" max="50" required 
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="submit" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
+                        Save Changes
+                    </button>
+                    <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

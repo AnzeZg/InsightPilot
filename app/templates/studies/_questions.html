@@ -1,0 +1,111 @@
+{% if questions %}
+<ul id="questions-list" class="divide-y divide-gray-200">
+    {% for question in questions %}
+    <li class="px-4 py-4 sm:px-6 flex items-center justify-between" data-question-id="{{ question.id }}" data-order="{{ question.sort_order }}">
+        <div class="flex items-center flex-1">
+            <button type="button" class="reorder-handle cursor-move mr-3 text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                </svg>
+            </button>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">{{ question.text }}</p>
+                <p class="text-xs text-gray-500 mt-1">Order: {{ question.sort_order }}</p>
+            </div>
+        </div>
+        <button hx-delete="/app/studies/{{ question.study_id }}/questions/{{ question.id }}" 
+                hx-target="#questions-container" 
+                hx-swap="innerHTML"
+                hx-confirm="Delete this question?"
+                class="ml-4 text-red-600 hover:text-red-800">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+
+<script>
+(function() {
+    const list = document.getElementById('questions-list');
+    if (!list) return;
+
+    let draggedElement = null;
+
+    list.querySelectorAll('.reorder-handle').forEach(handle => {
+        const li = handle.closest('li');
+        
+        handle.addEventListener('mousedown', (e) => {
+            li.draggable = true;
+        });
+
+        li.addEventListener('dragstart', (e) => {
+            draggedElement = li;
+            li.style.opacity = '0.5';
+        });
+
+        li.addEventListener('dragend', (e) => {
+            li.style.opacity = '1';
+            li.draggable = false;
+            
+            // Gather new order
+            const items = Array.from(list.querySelectorAll('li'));
+            const questionOrder = items.map((item, index) => ({
+                question_id: parseInt(item.dataset.questionId),
+                sort_order: index
+            }));
+
+            // Send reorder request
+            fetch('/app/studies/{{ study_id }}/questions/reorder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ questions: questionOrder })
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('questions-container').innerHTML = html;
+                showToast('Questions reordered');
+            })
+            .catch(err => {
+                showToast('Failed to reorder', 'error');
+                console.error(err);
+            });
+        });
+
+        li.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(list, e.clientY);
+            if (afterElement == null) {
+                list.appendChild(draggedElement);
+            } else {
+                list.insertBefore(draggedElement, afterElement);
+            }
+        });
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('li:not(.opacity-50)')];
+        
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+})();
+</script>
+{% else %}
+<div class="px-4 py-8 sm:px-6 text-center">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <p class="mt-2 text-sm text-gray-500">No questions yet. Add your first seed question to guide the interview.</p>
+</div>
+{% endif %}
+

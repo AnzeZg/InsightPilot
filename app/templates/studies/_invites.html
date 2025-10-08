@@ -1,0 +1,59 @@
+{% if invites %}
+<ul class="divide-y divide-gray-200">
+    {% for invite in invites %}
+    <li class="px-4 py-4 sm:px-6">
+        <div class="flex items-center justify-between">
+            <div class="flex-1">
+                <div class="flex items-center">
+                    <p class="text-sm font-medium text-gray-900">
+                        {% if invite.interviewee_email %}
+                            {{ invite.interviewee_email }}
+                        {% else %}
+                            Anonymous Invite
+                        {% endif %}
+                    </p>
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if invite.status == 'created' %}bg-gray-100 text-gray-800
+                        {% elif invite.status == 'opened' %}bg-blue-100 text-blue-800
+                        {% elif invite.status == 'completed' %}bg-green-100 text-green-800
+                        {% endif %}">
+                        {{ invite.status|capitalize }}
+                    </span>
+                </div>
+                <div class="mt-2 flex items-center">
+                    <code class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600 break-all">
+                        {{ request.url.scheme }}://{{ request.url.netloc }}/interview/{{ invite.invite_code }}
+                    </code>
+                    <button onclick="copyToClipboard('{{ request.url.scheme }}://{{ request.url.netloc }}/interview/{{ invite.invite_code }}')" 
+                            class="ml-2 text-indigo-600 hover:text-indigo-800">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                    </button>
+                </div>
+                {% if invite.expires_at %}
+                <p class="mt-1 text-xs text-gray-500">Expires: {{ invite.expires_at.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                {% endif %}
+            </div>
+            <button hx-delete="/app/studies/{{ invite.study_id }}/invites/{{ invite.id }}" 
+                    hx-target="#invites-container" 
+                    hx-swap="innerHTML"
+                    hx-confirm="Delete this invite?"
+                    class="ml-4 text-red-600 hover:text-red-800">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </button>
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<div class="px-4 py-8 sm:px-6 text-center">
+    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+    </svg>
+    <p class="mt-2 text-sm text-gray-500">No invites yet. Generate an invite link to share with participants.</p>
+</div>
+{% endif %}
+
