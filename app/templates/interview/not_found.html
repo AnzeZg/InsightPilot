@@ -1,0 +1,31 @@
+{% extends "public_base.html" %}
+
+{% block title %}Invite Not Found - InsightPilot{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-lg p-8 text-center fade-in">
+    <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+        <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+    </div>
+    
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">Invitation Not Found</h2>
+    
+    <p class="text-gray-600 mb-6 max-w-md mx-auto">
+        We couldn't find an interview invitation with this code. Please check the link and try again.
+    </p>
+    
+    <div class="bg-gray-50 border-l-4 border-gray-400 p-4 text-left max-w-md mx-auto">
+        <p class="text-sm text-gray-700">
+            <strong>Troubleshooting:</strong>
+        </p>
+        <ul class="text-sm text-gray-700 mt-2 list-disc list-inside">
+            <li>Make sure you copied the complete link</li>
+            <li>Check that the link hasn't been modified</li>
+            <li>Contact the researcher for a new invitation</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+

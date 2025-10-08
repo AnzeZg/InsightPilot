@@ -61,3 +61,4 @@ def clear_session(response: Response) -> None:
     """
     response.delete_cookie(SESSION_COOKIE)
 
+

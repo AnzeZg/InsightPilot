@@ -251,3 +251,4 @@ def delete_invite(
     invite_crud.delete_invite(db, invite_id)
     return None
 
+
