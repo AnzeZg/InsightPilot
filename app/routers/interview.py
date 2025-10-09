@@ -13,6 +13,7 @@ from app.crud import invite as invite_crud
 from app.db.session import get_db
 from app.models.invite import InviteStatus
 from app.schemas.interview import IntakeForm
+from app.services.ai_agent import AIInterviewAgent
 
 router = APIRouter(prefix="/interview", tags=["interview"])
 templates = Jinja2Templates(directory="app/templates")
@@ -309,9 +310,12 @@ async def chat_page(
     db: Session = Depends(get_db),
 ):
     """
-    Chat interface placeholder (Day 4).
+    Chat interface for conducting the AI interview.
     
-    Shows a placeholder page until the actual chat is implemented.
+    - Loads existing messages
+    - Verifies interviewee completed intake
+    - Checks if interview is completed
+    - Initiates conversation if no messages exist
     """
     invite = invite_crud.get_invite_by_code(db, invite_code)
     
@@ -338,14 +342,194 @@ async def chat_page(
     
     study = invite.study
     
+    if interview.completed_at:
+        return RedirectResponse(
+            url=f"/interview/{invite_code}/complete",
+            status_code=303,
+        )
+    
+    messages = interview_crud.get_messages_by_interview(db, interview.id)
+    
+    if not messages:
+        try:
+            agent = AIInterviewAgent()
+            initial_message = agent.get_initial_message(
+                study_title=study.title,
+                study_description=study.description,
+                study_questions=[q.text for q in study.questions],
+                interviewee_name=interviewee.name,
+            )
+            
+            interview_crud.create_message(
+                db,
+                interview_id=interview.id,
+                role="assistant",
+                content=initial_message,
+            )
+            
+            messages = interview_crud.get_messages_by_interview(db, interview.id)
+            
+        except Exception as e:
+            return templates.TemplateResponse(
+                request=request,
+                name="interview/not_found.html",
+                context={"error": f"Failed to initialize interview: {str(e)}"},
+                status_code=500,
+            )
+    
+    turns_remaining = study.max_agent_turns - interview.agent_turns
+    
     return templates.TemplateResponse(
         request=request,
-        name="interview/chat_placeholder.html",
+        name="interview/chat.html",
         context={
             "invite_code": invite_code,
             "invite": invite,
             "study": study,
             "interviewee": interviewee,
+            "interview": interview,
+            "messages": messages,
+            "turns_remaining": turns_remaining,
+            "max_turns": study.max_agent_turns,
+        },
+    )
+
+
+@router.post("/{invite_code}/chat/message")
+async def send_message(
+    request: Request,
+    invite_code: str,
+    message: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Handle user message submission and generate AI response.
+    
+    - Saves user message
+    - Triggers AI agent response
+    - Saves AI response
+    - Increments turn counter
+    - Checks completion conditions
+    """
+    invite = invite_crud.get_invite_by_code(db, invite_code)
+    
+    if not invite:
+        return {"error": "Invite not found"}, 404
+    
+    interview = interview_crud.get_interview_by_invite(db, invite.id)
+    if not interview:
+        return {"error": "Interview not found"}, 404
+    
+    if interview.completed_at:
+        return {"error": "Interview already completed"}, 400
+    
+    interviewee = interview_crud.get_interviewee_by_interview(db, interview.id)
+    study = invite.study
+    
+    if not message.strip():
+        return {"error": "Message cannot be empty"}, 400
+    
+    if len(message) > 2000:
+        message = message[:2000]
+    
+    interview_crud.create_message(
+        db,
+        interview_id=interview.id,
+        role="user",
+        content=message.strip(),
+    )
+    
+    if interview.agent_turns >= study.max_agent_turns:
+        interview_crud.complete_interview(db, interview.id)
+        
+        return {
+            "status": "completed",
+            "message": "Interview completed. Thank you for your participation!",
+            "redirect": f"/interview/{invite_code}/complete"
+        }
+    
+    conversation_history = interview_crud.get_messages_by_interview(db, interview.id)
+    history_for_ai = [
+        {"role": msg.role, "content": msg.content}
+        for msg in conversation_history
+    ]
+    
+    try:
+        agent = AIInterviewAgent()
+        ai_response = agent.get_ai_response(
+            study_title=study.title,
+            study_description=study.description,
+            study_questions=[q.text for q in study.questions],
+            conversation_history=history_for_ai,
+            current_turn=interview.agent_turns,
+            max_turns=study.max_agent_turns,
+        )
+        
+        interview_crud.create_message(
+            db,
+            interview_id=interview.id,
+            role="assistant",
+            content=ai_response,
+        )
+        
+        interview_crud.increment_agent_turns(db, interview.id)
+        
+        db.refresh(interview)
+        
+        is_completed = interview.agent_turns >= study.max_agent_turns
+        if is_completed:
+            interview_crud.complete_interview(db, interview.id)
+        
+        return {
+            "status": "completed" if is_completed else "success",
+            "message": ai_response,
+            "turns_remaining": study.max_agent_turns - interview.agent_turns,
+            "redirect": f"/interview/{invite_code}/complete" if is_completed else None
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Failed to generate response: {str(e)}"
+        }, 500
+
+
+@router.get("/{invite_code}/complete", response_class=HTMLResponse)
+async def interview_complete(
+    request: Request,
+    invite_code: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Thank you page after interview completion.
+    """
+    invite = invite_crud.get_invite_by_code(db, invite_code)
+    
+    if not invite:
+        return templates.TemplateResponse(
+            request=request,
+            name="interview/not_found.html",
+            status_code=404,
+        )
+    
+    interview = interview_crud.get_interview_by_invite(db, invite.id)
+    if not interview:
+        return RedirectResponse(
+            url=f"/interview/{invite_code}/consent",
+            status_code=303,
+        )
+    
+    study = invite.study
+    interviewee = interview_crud.get_interviewee_by_interview(db, interview.id)
+    
+    return templates.TemplateResponse(
+        request=request,
+        name="interview/thank_you.html",
+        context={
+            "invite_code": invite_code,
+            "study": study,
+            "interviewee": interviewee,
+            "interview": interview,
         },
     )
 
