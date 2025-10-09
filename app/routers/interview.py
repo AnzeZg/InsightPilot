@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr, ValidationError
 from sqlalchemy.orm import Session
@@ -429,20 +429,32 @@ async def send_message(
     invite = invite_crud.get_invite_by_code(db, invite_code)
     
     if not invite:
-        return {"error": "Invite not found"}, 404
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Invite not found"}
+        )
     
     interview = interview_crud.get_interview_by_invite(db, invite.id)
     if not interview:
-        return {"error": "Interview not found"}, 404
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Interview not found"}
+        )
     
     if interview.completed_at:
-        return {"error": "Interview already completed"}, 400
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Interview already completed"}
+        )
     
     interviewee = interview_crud.get_interviewee_by_interview(db, interview.id)
     study = invite.study
     
     if not message.strip():
-        return {"error": "Message cannot be empty"}, 400
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Message cannot be empty"}
+        )
     
     if len(message) > 2000:
         message = message[:2000]
@@ -503,10 +515,13 @@ async def send_message(
         }
         
     except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Failed to generate response: {str(e)}"
-        }, 500
+        return JSONResponse(
+            status_code=500,
+            content={
+                "status": "error",
+                "message": f"Failed to generate response: {str(e)}"
+            }
+        )
 
 
 @router.get("/{invite_code}/complete", response_class=HTMLResponse)
