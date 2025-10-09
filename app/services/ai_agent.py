@@ -6,6 +6,19 @@ from typing import Optional
 from openai import OpenAI
 
 
+def get_openai_api_key() -> Optional[str]:
+    """Get OpenAI API key from environment or settings."""
+    key = os.getenv("OPENAI_API_KEY")
+    if key:
+        return key
+    
+    try:
+        from app.settings import settings
+        return settings.openai_api_key
+    except Exception:
+        return None
+
+
 class AIInterviewAgent:
     """AI agent that conducts research interviews based on study context."""
 
@@ -14,9 +27,9 @@ class AIInterviewAgent:
         Initialize the AI agent.
         
         Args:
-            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
+            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var or settings)
         """
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or get_openai_api_key()
         if not self.api_key:
             raise ValueError(
                 "OpenAI API key required. Set OPENAI_API_KEY environment variable "

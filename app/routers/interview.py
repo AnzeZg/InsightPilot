@@ -369,12 +369,27 @@ async def chat_page(
             
             messages = interview_crud.get_messages_by_interview(db, interview.id)
             
+        except ValueError as e:
+            return templates.TemplateResponse(
+                request=request,
+                name="interview/chat_placeholder.html",
+                context={
+                    "invite_code": invite_code,
+                    "study": study,
+                    "interviewee": interviewee,
+                    "error": str(e),
+                },
+            )
         except Exception as e:
             return templates.TemplateResponse(
                 request=request,
-                name="interview/not_found.html",
-                context={"error": f"Failed to initialize interview: {str(e)}"},
-                status_code=500,
+                name="interview/chat_placeholder.html",
+                context={
+                    "invite_code": invite_code,
+                    "study": study,
+                    "interviewee": interviewee,
+                    "error": f"Failed to initialize AI agent: {str(e)}",
+                },
             )
     
     turns_remaining = study.max_agent_turns - interview.agent_turns
