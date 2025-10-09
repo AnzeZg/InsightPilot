@@ -1,0 +1,175 @@
+"""AI Agent service for conducting research interviews."""
+
+import os
+from typing import Optional
+
+from openai import OpenAI
+
+
+class AIInterviewAgent:
+    """AI agent that conducts research interviews based on study context."""
+
+    def __init__(self, api_key: Optional[str] = None):
+        """
+        Initialize the AI agent.
+        
+        Args:
+            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
+        """
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        if not self.api_key:
+            raise ValueError(
+                "OpenAI API key required. Set OPENAI_API_KEY environment variable "
+                "in your .env file or pass api_key parameter."
+            )
+        self.client = OpenAI(api_key=self.api_key)
+        self.model = "gpt-4o-mini" 
+
+    def generate_system_prompt(
+        self,
+        study_title: str,
+        study_description: str,
+        study_questions: list[str],
+        turns_remaining: int,
+    ) -> str:
+        """
+        Generate the system prompt for the AI agent.
+        
+        Args:
+            study_title: Title of the research study
+            study_description: Description of the study
+            study_questions: List of research questions to explore
+            turns_remaining: Number of turns remaining in the interview
+            
+        Returns:
+            System prompt string
+        """
+        questions_text = "\n".join([f"- {q}" for q in study_questions])
+        
+        return f"""You are an AI research interviewer conducting a study titled: "{study_title}"
+
+Study context: {study_description}
+
+Research questions to explore:
+{questions_text}
+
+Your role:
+- Ask thoughtful, open-ended questions related to the research topics
+- Follow up on interesting responses with deeper questions
+- Be conversational, empathetic, and professional
+- Stay focused on the research questions
+- Probe deeper when responses are vague or brief
+- Guide the conversation naturally between topics
+- You have {turns_remaining} questions remaining in this interview
+
+Conversation guidelines:
+- Ask ONE question at a time
+- Keep questions concise (2-3 sentences maximum)
+- Acknowledge the previous response before asking the next question
+- Transition smoothly between topics
+- If this is the last turn, thank them and provide a graceful closing
+- Be encouraging and appreciative of their time
+
+Remember: Your goal is to gather authentic, detailed insights related to the research questions."""
+
+    def get_ai_response(
+        self,
+        study_title: str,
+        study_description: str,
+        study_questions: list[str],
+        conversation_history: list[dict],
+        current_turn: int,
+        max_turns: int,
+    ) -> str:
+        """
+        Get AI response based on conversation context.
+        
+        Args:
+            study_title: Title of the research study
+            study_description: Description of the study
+            study_questions: List of research questions
+            conversation_history: List of previous messages [{"role": "user"|"assistant", "content": "..."}]
+            current_turn: Current turn number (0-indexed)
+            max_turns: Maximum number of agent turns allowed
+            
+        Returns:
+            AI-generated response string
+        """
+        turns_remaining = max_turns - current_turn
+        
+        system_prompt = self.generate_system_prompt(
+            study_title=study_title,
+            study_description=study_description,
+            study_questions=study_questions,
+            turns_remaining=turns_remaining,
+        )
+        
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(conversation_history[-10:])
+        
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.7,
+                max_tokens=300,
+                presence_penalty=0.6,
+                frequency_penalty=0.3,
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            return self._get_error_fallback(str(e))
+
+    def get_initial_message(
+        self,
+        study_title: str,
+        study_description: str,
+        study_questions: list[str],
+        interviewee_name: str,
+    ) -> str:
+        """
+        Generate the first message to start the interview.
+        
+        Args:
+            study_title: Title of the research study
+            study_description: Description of the study
+            study_questions: List of research questions
+            interviewee_name: Name of the interviewee
+            
+        Returns:
+            Opening message string
+        """
+        system_prompt = f"""You are an AI research interviewer starting an interview for a study titled: "{study_title}"
+
+Study context: {study_description}
+
+The participant's name is {interviewee_name}.
+
+Generate a warm, welcoming opening message that:
+1. Thanks them for participating
+2. Briefly mentions what the study is about
+3. Asks your first research question related to the study topics
+4. Keep it concise (3-4 sentences total)
+
+Be friendly and professional."""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "system", "content": system_prompt}],
+                temperature=0.7,
+                max_tokens=200,
+            )
+            
+            return response.choices[0].message.content.strip()
+            
+        except Exception as e:
+            return f"Hello {interviewee_name}! Thank you for participating in this research study about {study_title}. I'm excited to hear your thoughts. To begin, could you share your initial perspective on this topic?"
+
+    def _get_error_fallback(self, error_message: str) -> str:
+        """Provide a graceful fallback response when API fails."""
+        print(f"AI Agent Error: {error_message}")
+        return "Thank you for your response. Could you tell me more about that?"
+
