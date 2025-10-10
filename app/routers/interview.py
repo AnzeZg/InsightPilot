@@ -1,5 +1,6 @@
 """Public-facing interview routes (no authentication required)."""
 
+import logging
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -14,6 +15,9 @@ from app.db.session import get_db
 from app.models.invite import InviteStatus
 from app.schemas.interview import IntakeForm
 from app.services.ai_agent import AIInterviewAgent
+from app.services.insight_generator import InsightGenerator
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/interview", tags=["interview"])
 templates = Jinja2Templates(directory="app/templates")
@@ -506,6 +510,24 @@ async def send_message(
         is_completed = interview.agent_turns >= study.max_agent_turns
         if is_completed:
             interview_crud.complete_interview(db, interview.id)
+            
+            try:
+                generator = InsightGenerator()
+                insights = generator.generate_insights(db, interview.id)
+                
+                combined_keywords = insights.get("keywords", []) + insights.get("themes", [])
+                
+                interview_crud.create_insight(
+                    db,
+                    interview_id=interview.id,
+                    summary=insights.get("summary", "Interview completed"),
+                    sentiment=insights.get("sentiment", "neutral"),
+                    keywords_json=combined_keywords,
+                    quotes_json=insights.get("notable_quotes", []),
+                )
+                logger.info(f"Generated insights for interview {interview.id}")
+            except Exception as e:
+                logger.error(f"Failed to generate insights for interview {interview.id}: {e}")
         
         return {
             "status": "completed" if is_completed else "success",
