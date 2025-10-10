@@ -4,10 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
+from app.crud import interview as interview_crud
 from app.crud import invite as invite_crud
 from app.crud import study as study_crud
 from app.db.session import get_db
 from app.models.user import User
+from app.schemas.interview import InterviewDetailResponse, InterviewListItem
 from app.schemas.invite import InviteCreate, InviteResponse
 from app.schemas.study import (
     QuestionBatchReorder,
@@ -250,5 +252,87 @@ def delete_invite(
     
     invite_crud.delete_invite(db, invite_id)
     return None
+
+
+@router.get("/{study_id}/interviews", response_model=list[InterviewListItem])
+def list_interviews(
+    study_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get all interviews for a study with summary information.
+    
+    Returns interviews with:
+    - Interviewee details
+    - Completion status
+    - Insights summary
+    - Message count
+    """
+    verify_study_owner(study_id, current_user, db)
+    
+    interviews = interview_crud.get_interviews_by_study(db, study_id, load_relations=True)
+    
+    result = []
+    for interview in interviews:
+        message_count = interview_crud.get_message_count(db, interview.id)
+        
+        interview_data = InterviewListItem(
+            id=interview.id,
+            study_id=interview.study_id,
+            started_at=interview.started_at,
+            completed_at=interview.completed_at,
+            agent_turns=interview.agent_turns,
+            interviewee=interview.interviewee,
+            insight=interview.insight,
+            message_count=message_count,
+        )
+        result.append(interview_data)
+    
+    return result
+
+
+@router.get("/{study_id}/interviews/{interview_id}", response_model=InterviewDetailResponse)
+def get_interview_transcript(
+    study_id: int,
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get detailed interview transcript with full conversation.
+    
+    Returns:
+    - All messages in chronological order
+    - Interviewee information
+    - Generated insights
+    - Interview metadata
+    """
+    verify_study_owner(study_id, current_user, db)
+    
+    interview = interview_crud.get_interview_by_id(db, interview_id, load_all=True)
+    
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found",
+        )
+    
+    if interview.study_id != study_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found",
+        )
+    
+    return InterviewDetailResponse(
+        id=interview.id,
+        study_id=interview.study_id,
+        started_at=interview.started_at,
+        completed_at=interview.completed_at,
+        agent_turns=interview.agent_turns,
+        interviewee=interview.interviewee,
+        messages=interview.messages,
+        insight=interview.insight,
+    )
 
 

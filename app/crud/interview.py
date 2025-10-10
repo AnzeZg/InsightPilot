@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.interview import Insight, Interview, Interviewee, Message
@@ -21,22 +21,33 @@ def create_interview(db: Session, study_id: int, invite_id: int) -> Interview:
 
 
 def get_interview_by_id(
-    db: Session, interview_id: int, load_messages: bool = False
+    db: Session, interview_id: int, load_messages: bool = False, load_all: bool = False
 ) -> Interview | None:
-    """Get interview by ID."""
+    """Get interview by ID with optional related data."""
     stmt = select(Interview).where(Interview.id == interview_id)
-    if load_messages:
+    if load_all:
+        stmt = stmt.options(
+            selectinload(Interview.messages),
+            selectinload(Interview.interviewee),
+            selectinload(Interview.insight),
+        )
+    elif load_messages:
         stmt = stmt.options(selectinload(Interview.messages))
     return db.scalar(stmt)
 
 
-def get_interviews_by_study(db: Session, study_id: int) -> list[Interview]:
+def get_interviews_by_study(db: Session, study_id: int, load_relations: bool = False) -> list[Interview]:
     """Get all interviews for a study."""
     stmt = (
         select(Interview)
         .where(Interview.study_id == study_id)
         .order_by(Interview.started_at.desc())
     )
+    if load_relations:
+        stmt = stmt.options(
+            selectinload(Interview.interviewee),
+            selectinload(Interview.insight),
+        )
     return list(db.scalars(stmt).all())
 
 
@@ -93,6 +104,12 @@ def get_interviewee_by_interview(db: Session, interview_id: int) -> Interviewee 
 
 
 # Message CRUD
+
+
+def get_message_count(db: Session, interview_id: int) -> int:
+    """Get count of messages for an interview."""
+    stmt = select(func.count(Message.id)).where(Message.interview_id == interview_id)
+    return db.scalar(stmt) or 0
 
 
 def create_message(db: Session, interview_id: int, role: str, content: str) -> Message:
