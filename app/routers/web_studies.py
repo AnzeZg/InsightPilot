@@ -6,6 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
+from app.crud import interview as interview_crud
 from app.crud import invite as invite_crud
 from app.crud import study as study_crud
 from app.db.session import get_db
@@ -227,4 +228,79 @@ def delete_invite_htmx(
         "studies/_invites.html",
         {"request": request, "invites": invites},
     )
+
+
+@router.get("/studies/{study_id}/interviews", response_class=HTMLResponse)
+def list_interviews_page(
+    request: Request,
+    study_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Render the interviews list page for a study."""
+    study = verify_study_owner(study_id, current_user, db)
+    
+    interviews = interview_crud.get_interviews_by_study(db, study_id, load_relations=True)
+    
+    interview_list = []
+    for interview in interviews:
+        message_count = interview_crud.get_message_count(db, interview.id)
+        interview_list.append({
+            "id": interview.id,
+            "study_id": interview.study_id,
+            "started_at": interview.started_at,
+            "completed_at": interview.completed_at,
+            "agent_turns": interview.agent_turns,
+            "interviewee": interview.interviewee,
+            "insight": interview.insight,
+            "message_count": message_count,
+        })
+    
+    return templates.TemplateResponse(
+        "studies/interviews.html",
+        {
+            "request": request,
+            "study": study,
+            "interviews": interview_list,
+        },
+    )
+
+
+@router.get("/studies/{study_id}/interviews/{interview_id}", response_class=HTMLResponse)
+def view_transcript_page(
+    request: Request,
+    study_id: int,
+    interview_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Render the interview transcript page."""
+    study = verify_study_owner(study_id, current_user, db)
+    
+    interview = interview_crud.get_interview_by_id(db, interview_id, load_all=True)
+    
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found",
+        )
+    
+    if interview.study_id != study_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found",
+        )
+    
+    return templates.TemplateResponse(
+        "studies/transcript.html",
+        {
+            "request": request,
+            "study": study,
+            "interview": interview,
+            "interviewee": interview.interviewee,
+            "messages": interview.messages,
+            "insight": interview.insight,
+        },
+    )
+
 

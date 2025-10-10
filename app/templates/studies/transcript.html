@@ -1,0 +1,204 @@
+{% extends "researcher_base.html" %}
+
+{% block title %}Interview Transcript - {{ study.title }} - InsightPilot{% endblock %}
+
+{% block content %}
+<div class="px-4 sm:px-0">
+    <!-- Header -->
+    <div class="mb-8">
+        <a href="/app/studies/{{ study.id }}/interviews" class="text-sm text-indigo-600 hover:text-indigo-800 mb-2 inline-flex items-center">
+            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Back to Interviews
+        </a>
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mt-2">Interview Transcript</h1>
+                <p class="mt-2 text-gray-600">{{ interviewee.name if interviewee else 'Anonymous' }} - {{ study.title }}</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="/studies/{{ study.id }}/interviews/{{ interview.id }}/export?format=json" 
+                   class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Export JSON
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Transcript Column -->
+        <div class="lg:col-span-2">
+            <!-- Interview Info Card -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-medium text-gray-900">Interview Details</h2>
+                    {% if interview.completed_at %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            Completed
+                        </span>
+                    {% else %}
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            In Progress
+                        </span>
+                    {% endif %}
+                </div>
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
+                    {% if interviewee %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Participant</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ interviewee.name }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Email</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ interviewee.email }}</dd>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Started</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ interview.started_at.strftime('%B %d, %Y at %I:%M %p') }}</dd>
+                    </div>
+                    {% if interview.completed_at %}
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Completed</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ interview.completed_at.strftime('%B %d, %Y at %I:%M %p') }}</dd>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Agent Turns</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ interview.agent_turns }} / {{ study.max_agent_turns }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">Total Messages</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ messages|length }}</dd>
+                    </div>
+                </dl>
+
+                {% if interviewee and interviewee.demographics_json %}
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <dt class="text-sm font-medium text-gray-500 mb-2">Demographics</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            <div class="flex flex-wrap gap-2">
+                                {% for key, value in interviewee.demographics_json.items() %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ key|replace('_', ' ')|title }}: {{ value }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        </dd>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Conversation Transcript -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">Conversation</h2>
+                <div class="space-y-4">
+                    {% for message in messages %}
+                        <div class="flex {% if message.role == 'user' %}justify-end{% else %}justify-start{% endif %}">
+                            <div class="{% if message.role == 'user' %}bg-indigo-100{% else %}bg-gray-100{% endif %} rounded-lg px-4 py-3 max-w-3xl">
+                                <div class="flex items-center mb-1">
+                                    <span class="text-xs font-medium {% if message.role == 'user' %}text-indigo-900{% else %}text-gray-900{% endif %}">
+                                        {% if message.role == 'user' %}
+                                            {{ interviewee.name if interviewee else 'Participant' }}
+                                        {% else %}
+                                            AI Interviewer
+                                        {% endif %}
+                                    </span>
+                                    <span class="ml-2 text-xs text-gray-500">
+                                        {{ message.created_at.strftime('%I:%M %p') }}
+                                    </span>
+                                </div>
+                                <p class="text-sm {% if message.role == 'user' %}text-indigo-900{% else %}text-gray-900{% endif %} whitespace-pre-wrap">{{ message.content }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                {% if not messages %}
+                    <p class="text-center text-gray-500 py-8">No messages yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Insights Sidebar -->
+        <div class="lg:col-span-1">
+            {% if insight %}
+                <!-- Sentiment Card -->
+                <div class="bg-white shadow rounded-lg p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Sentiment</h3>
+                    <div class="flex items-center justify-center">
+                        {% if insight.sentiment == 'positive' %}
+                            <div class="text-center">
+                                <div class="text-6xl mb-2">😊</div>
+                                <p class="text-sm font-medium text-green-600">Positive</p>
+                            </div>
+                        {% elif insight.sentiment == 'negative' %}
+                            <div class="text-center">
+                                <div class="text-6xl mb-2">😞</div>
+                                <p class="text-sm font-medium text-red-600">Negative</p>
+                            </div>
+                        {% else %}
+                            <div class="text-center">
+                                <div class="text-6xl mb-2">😐</div>
+                                <p class="text-sm font-medium text-gray-600">Neutral</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="bg-white shadow rounded-lg p-6 mb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-3">Summary</h3>
+                    <p class="text-sm text-gray-700">{{ insight.summary }}</p>
+                </div>
+
+                <!-- Keywords Card -->
+                {% if insight.keywords_json %}
+                    <div class="bg-white shadow rounded-lg p-6 mb-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-3">Key Topics</h3>
+                        <div class="flex flex-wrap gap-2">
+                            {% for keyword in insight.keywords_json[:10] %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800">
+                                    {{ keyword }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Quotes Card -->
+                {% if insight.quotes_json %}
+                    <div class="bg-white shadow rounded-lg p-6">
+                        <h3 class="text-lg font-medium text-gray-900 mb-3">Notable Quotes</h3>
+                        <div class="space-y-3">
+                            {% for quote in insight.quotes_json %}
+                                <blockquote class="border-l-4 border-indigo-500 pl-4 py-2">
+                                    <p class="text-sm text-gray-700 italic">"{{ quote }}"</p>
+                                </blockquote>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <!-- No Insights Yet -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No insights yet</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Insights will be generated when the interview is completed.
+                        </p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
