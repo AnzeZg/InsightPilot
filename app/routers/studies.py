@@ -1,6 +1,12 @@
 """Studies routes for researchers."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import csv
+import io
+import json
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
@@ -334,5 +340,220 @@ def get_interview_transcript(
         messages=interview.messages,
         insight=interview.insight,
     )
+
+
+def _format_datetime(dt: datetime | None) -> str:
+    """Format datetime for export."""
+    if dt is None:
+        return ""
+    return dt.strftime("%Y-%m-%d %H:%M:%S")
+
+
+def _format_json_field(data: dict | list | None) -> str:
+    """Format JSON field as string."""
+    if data is None:
+        return ""
+    return json.dumps(data)
+
+
+def _export_interview_to_dict(interview, study_title: str) -> dict:
+    """Convert interview to dictionary for export."""
+    interviewee = interview.interviewee
+    insight = interview.insight
+    
+    # Build full conversation text
+    conversation = []
+    for msg in interview.messages:
+        conversation.append(f"[{msg.role.upper()}]: {msg.content}")
+    conversation_text = "\n\n".join(conversation)
+    
+    return {
+        "study_title": study_title,
+        "interview_id": interview.id,
+        "interviewee_name": interviewee.name if interviewee else "",
+        "interviewee_email": interviewee.email if interviewee else "",
+        "demographics": _format_json_field(interviewee.demographics_json if interviewee else None),
+        "started_at": _format_datetime(interview.started_at),
+        "completed_at": _format_datetime(interview.completed_at),
+        "agent_turns": interview.agent_turns,
+        "message_count": len(interview.messages),
+        "summary": insight.summary if insight else "",
+        "sentiment": insight.sentiment if insight else "",
+        "keywords": _format_json_field(insight.keywords_json if insight else None),
+        "quotes": _format_json_field(insight.quotes_json if insight else None),
+        "conversation": conversation_text,
+    }
+
+
+def _generate_csv_export(interviews, study_title: str) -> str:
+    """Generate CSV export from interviews."""
+    output = io.StringIO()
+    
+    if not interviews:
+        return ""
+    
+    # Define CSV columns
+    fieldnames = [
+        "study_title",
+        "interview_id",
+        "interviewee_name",
+        "interviewee_email",
+        "demographics",
+        "started_at",
+        "completed_at",
+        "agent_turns",
+        "message_count",
+        "summary",
+        "sentiment",
+        "keywords",
+        "quotes",
+        "conversation",
+    ]
+    
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    
+    for interview in interviews:
+        row = _export_interview_to_dict(interview, study_title)
+        writer.writerow(row)
+    
+    return output.getvalue()
+
+
+def _generate_json_export(interviews, study_title: str, study_description: str) -> dict:
+    """Generate JSON export from interviews."""
+    interviews_data = []
+    
+    for interview in interviews:
+        interviewee = interview.interviewee
+        insight = interview.insight
+        
+        interview_data = {
+            "id": interview.id,
+            "started_at": interview.started_at.isoformat() if interview.started_at else None,
+            "completed_at": interview.completed_at.isoformat() if interview.completed_at else None,
+            "agent_turns": interview.agent_turns,
+            "interviewee": {
+                "name": interviewee.name if interviewee else None,
+                "email": interviewee.email if interviewee else None,
+                "demographics": interviewee.demographics_json if interviewee else None,
+            },
+            "messages": [
+                {
+                    "role": msg.role,
+                    "content": msg.content,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                }
+                for msg in interview.messages
+            ],
+            "insight": {
+                "summary": insight.summary if insight else None,
+                "sentiment": insight.sentiment if insight else None,
+                "keywords": insight.keywords_json if insight else None,
+                "quotes": insight.quotes_json if insight else None,
+            } if insight else None,
+        }
+        interviews_data.append(interview_data)
+    
+    return {
+        "study": {
+            "title": study_title,
+            "description": study_description,
+        },
+        "export_date": datetime.now(timezone.utc).isoformat(),
+        "interview_count": len(interviews),
+        "interviews": interviews_data,
+    }
+
+
+@router.get("/{study_id}/interviews/{interview_id}/export")
+def export_interview(
+    study_id: int,
+    interview_id: int,
+    format: str = Query("json", pattern="^(json|csv)$"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Export a single interview in JSON or CSV format.
+    
+    - **format**: Export format (json or csv)
+    """
+    study = verify_study_owner(study_id, current_user, db)
+    
+    interview = interview_crud.get_interview_by_id(db, interview_id, load_all=True)
+    
+    if not interview:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found",
+        )
+    
+    if interview.study_id != study_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Interview not found",
+        )
+    
+    # Generate filename
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    filename = f"interview_{interview_id}_{timestamp}.{format}"
+    
+    if format == "csv":
+        csv_data = _generate_csv_export([interview], study.title)
+        return StreamingResponse(
+            iter([csv_data]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    else:  # json
+        json_data = _generate_json_export([interview], study.title, study.description)
+        return StreamingResponse(
+            iter([json.dumps(json_data, indent=2)]),
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+
+
+@router.get("/{study_id}/export")
+def export_study_interviews(
+    study_id: int,
+    format: str = Query("json", pattern="^(json|csv)$"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Export all interviews for a study in JSON or CSV format.
+    
+    - **format**: Export format (json or csv)
+    """
+    study = verify_study_owner(study_id, current_user, db)
+    
+    # Get all interviews for the study
+    interviews = interview_crud.get_interviews_by_study(db, study_id, load_relations=True)
+    
+    # Load all messages for each interview
+    for interview in interviews:
+        interview.messages = interview_crud.get_messages_by_interview(db, interview.id)
+    
+    # Generate filename
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    safe_title = "".join(c if c.isalnum() else "_" for c in study.title)[:50]
+    filename = f"study_{safe_title}_{timestamp}.{format}"
+    
+    if format == "csv":
+        csv_data = _generate_csv_export(interviews, study.title)
+        return StreamingResponse(
+            iter([csv_data]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
+    else:  # json
+        json_data = _generate_json_export(interviews, study.title, study.description)
+        return StreamingResponse(
+            iter([json.dumps(json_data, indent=2)]),
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
+        )
 
 
