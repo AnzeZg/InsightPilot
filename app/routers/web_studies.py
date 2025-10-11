@@ -139,7 +139,12 @@ def add_question_htmx(
 ):
     """Add a question and return the updated questions partial."""
     verify_study_owner(study_id, current_user, db)
-    study_crud.create_study_question(db, study_id, text)
+    
+    # Calculate next sort_order (max existing + 1, or 0 if no questions)
+    existing_questions = study_crud.get_study_questions(db, study_id)
+    next_sort_order = max([q.sort_order for q in existing_questions], default=-1) + 1
+    
+    study_crud.create_study_question(db, study_id, text, next_sort_order)
     questions = study_crud.get_study_questions(db, study_id)
     
     return templates.TemplateResponse(
@@ -300,6 +305,25 @@ def view_transcript_page(
             "interviewee": interview.interviewee,
             "messages": interview.messages,
             "insight": interview.insight,
+        },
+    )
+
+
+@router.get("/studies/{study_id}/analytics", response_class=HTMLResponse)
+def analytics_page(
+    request: Request,
+    study_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Render the analytics page for a study."""
+    study = verify_study_owner(study_id, current_user, db)
+    
+    return templates.TemplateResponse(
+        "studies/analytics.html",
+        {
+            "request": request,
+            "study": study,
         },
     )
 

@@ -93,3 +93,58 @@ class InterviewDetailResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SentimentDistribution(BaseModel):
+    """Sentiment distribution across interviews."""
+
+    positive: int = 0
+    neutral: int = 0
+    negative: int = 0
+    total: int = 0
+
+
+class KeywordFrequency(BaseModel):
+    """Keyword with frequency count."""
+
+    keyword: str
+    count: int
+
+
+class DemographicBreakdown(BaseModel):
+    """Demographic breakdown for a specific field."""
+
+    field: str
+    values: dict[str, int]  
+
+
+class ResponseMetrics(BaseModel):
+    """Aggregate response metrics."""
+
+    avg_message_count: float = 0.0
+    avg_response_length: float = 0.0
+    avg_conversation_length: float = 0.0
+    total_messages: int = 0
+
+
+class InterviewTimeline(BaseModel):
+    """Timeline data point for interviews."""
+
+    date: str  # YYYY-MM-DD
+    completed: int
+    in_progress: int
+
+
+class StudyAnalytics(BaseModel):
+    """Aggregated analytics for a study."""
+
+    study_id: int
+    study_title: str
+    total_interviews: int
+    completed_interviews: int
+    sentiment_distribution: SentimentDistribution
+    top_keywords: list[KeywordFrequency]
+    response_metrics: ResponseMetrics
+    demographics: list[DemographicBreakdown]
+    timeline: list[InterviewTimeline]
+    sample_quotes: list[str]

@@ -15,7 +15,16 @@ from app.crud import invite as invite_crud
 from app.crud import study as study_crud
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.interview import InterviewDetailResponse, InterviewListItem
+from app.schemas.interview import (
+    DemographicBreakdown,
+    InterviewDetailResponse,
+    InterviewListItem,
+    InterviewTimeline,
+    KeywordFrequency,
+    ResponseMetrics,
+    SentimentDistribution,
+    StudyAnalytics,
+)
 from app.schemas.invite import InviteCreate, InviteResponse
 from app.schemas.study import (
     QuestionBatchReorder,
@@ -83,7 +92,6 @@ def get_study(
 ):
     """Get a specific study with questions."""
     study = verify_study_owner(study_id, current_user, db)
-    # Load with questions
     study_with_questions = study_crud.get_study_by_id(db, study_id, load_questions=True)
     return study_with_questions
 
@@ -119,9 +127,6 @@ def delete_study(
     verify_study_owner(study_id, current_user, db)
     study_crud.delete_study(db, study_id)
     return None
-
-
-# Questions endpoints
 
 
 @router.post("/{study_id}/questions", response_model=QuestionResponse, status_code=status.HTTP_201_CREATED)
@@ -165,7 +170,6 @@ def reorder_questions(
     """Reorder questions in a study."""
     verify_study_owner(study_id, current_user, db)
     
-    # Verify all questions belong to this study
     existing_questions = study_crud.get_study_questions(db, study_id)
     existing_ids = {q.id for q in existing_questions}
     
@@ -176,7 +180,6 @@ def reorder_questions(
                 detail=f"Question {update.question_id} not found in study",
             )
     
-    # Apply reordering
     updates = [(u.question_id, u.sort_order) for u in reorder_data.updates]
     study_crud.reorder_questions(db, updates)
     return None
@@ -192,7 +195,6 @@ def delete_question(
     """Delete a question from a study."""
     verify_study_owner(study_id, current_user, db)
     
-    # Verify question belongs to study
     question = db.get(study_crud.StudyQuestion, question_id)
     if not question or question.study_id != study_id:
         raise HTTPException(
@@ -202,9 +204,6 @@ def delete_question(
     
     study_crud.delete_study_question(db, question_id)
     return None
-
-
-# Invites endpoints
 
 
 @router.post("/{study_id}/invites", response_model=InviteResponse, status_code=status.HTTP_201_CREATED)
@@ -248,7 +247,6 @@ def delete_invite(
     """Delete an invite."""
     verify_study_owner(study_id, current_user, db)
     
-    # Verify invite belongs to study
     invite = invite_crud.get_invite_by_id(db, invite_id)
     if not invite or invite.study_id != study_id:
         raise HTTPException(
@@ -361,7 +359,6 @@ def _export_interview_to_dict(interview, study_title: str) -> dict:
     interviewee = interview.interviewee
     insight = interview.insight
     
-    # Build full conversation text
     conversation = []
     for msg in interview.messages:
         conversation.append(f"[{msg.role.upper()}]: {msg.content}")
@@ -392,7 +389,6 @@ def _generate_csv_export(interviews, study_title: str) -> str:
     if not interviews:
         return ""
     
-    # Define CSV columns
     fieldnames = [
         "study_title",
         "interview_id",
@@ -495,7 +491,6 @@ def export_interview(
             detail="Interview not found",
         )
     
-    # Generate filename
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     filename = f"interview_{interview_id}_{timestamp}.{format}"
     
@@ -506,7 +501,7 @@ def export_interview(
             media_type="text/csv",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
-    else:  # json
+    else:
         json_data = _generate_json_export([interview], study.title, study.description)
         return StreamingResponse(
             iter([json.dumps(json_data, indent=2)]),
@@ -529,14 +524,11 @@ def export_study_interviews(
     """
     study = verify_study_owner(study_id, current_user, db)
     
-    # Get all interviews for the study
     interviews = interview_crud.get_interviews_by_study(db, study_id, load_relations=True)
     
-    # Load all messages for each interview
     for interview in interviews:
         interview.messages = interview_crud.get_messages_by_interview(db, interview.id)
     
-    # Generate filename
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     safe_title = "".join(c if c.isalnum() else "_" for c in study.title)[:50]
     filename = f"study_{safe_title}_{timestamp}.{format}"
@@ -548,12 +540,141 @@ def export_study_interviews(
             media_type="text/csv",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
-    else:  # json
+    else:
         json_data = _generate_json_export(interviews, study.title, study.description)
         return StreamingResponse(
             iter([json.dumps(json_data, indent=2)]),
             media_type="application/json",
             headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
+
+
+@router.get("/{study_id}/analytics", response_model=StudyAnalytics)
+def get_study_analytics(
+    study_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get aggregated analytics for a study.
+    
+    Returns:
+    - Sentiment distribution
+    - Top keywords across all interviews
+    - Response metrics (avg length, message count)
+    - Demographics breakdown
+    - Interview timeline
+    - Sample quotes
+    """
+    study = verify_study_owner(study_id, current_user, db)
+    
+    interviews = interview_crud.get_interviews_by_study(db, study_id, load_relations=True)
+    
+    total_interviews = len(interviews)
+    completed_interviews = sum(1 for i in interviews if i.completed_at)
+    
+    sentiment_counts = {"positive": 0, "neutral": 0, "negative": 0}
+    for interview in interviews:
+        if interview.insight and interview.insight.sentiment:
+            sentiment = interview.insight.sentiment.lower()
+            if sentiment in sentiment_counts:
+                sentiment_counts[sentiment] += 1
+    
+    sentiment_dist = SentimentDistribution(
+        positive=sentiment_counts["positive"],
+        neutral=sentiment_counts["neutral"],
+        negative=sentiment_counts["negative"],
+        total=sum(sentiment_counts.values()),
+    )
+    
+    keyword_freq = {}
+    for interview in interviews:
+        if interview.insight and interview.insight.keywords_json:
+            for keyword in interview.insight.keywords_json:
+                keyword_lower = keyword.lower()
+                keyword_freq[keyword_lower] = keyword_freq.get(keyword_lower, 0) + 1
+    
+    top_keywords = [
+        KeywordFrequency(keyword=kw, count=count)
+        for kw, count in sorted(keyword_freq.items(), key=lambda x: x[1], reverse=True)[:20]
+    ]
+    
+    total_messages = 0
+    total_response_length = 0
+    user_message_count = 0
+    
+    for interview in interviews:
+        messages = interview_crud.get_messages_by_interview(db, interview.id)
+        total_messages += len(messages)
+        
+        for msg in messages:
+            if msg.role == "user":
+                total_response_length += len(msg.content)
+                user_message_count += 1
+    
+    avg_message_count = total_messages / total_interviews if total_interviews > 0 else 0
+    avg_response_length = total_response_length / user_message_count if user_message_count > 0 else 0
+    avg_conversation_length = total_response_length / completed_interviews if completed_interviews > 0 else 0
+    
+    response_metrics = ResponseMetrics(
+        avg_message_count=round(avg_message_count, 2),
+        avg_response_length=round(avg_response_length, 2),
+        avg_conversation_length=round(avg_conversation_length, 2),
+        total_messages=total_messages,
+    )
+    
+    demographics_data = {}
+    for interview in interviews:
+        if interview.interviewee and interview.interviewee.demographics_json:
+            for field, value in interview.interviewee.demographics_json.items():
+                if value:
+                    if field not in demographics_data:
+                        demographics_data[field] = {}
+                    demographics_data[field][str(value)] = demographics_data[field].get(str(value), 0) + 1
+    
+    demographics = [
+        DemographicBreakdown(field=field, values=values)
+        for field, values in demographics_data.items()
+    ]
+    
+    from collections import defaultdict
+    timeline_data = defaultdict(lambda: {"completed": 0, "in_progress": 0})
+    
+    for interview in interviews:
+        date_key = interview.started_at.strftime("%Y-%m-%d")
+        if interview.completed_at:
+            timeline_data[date_key]["completed"] += 1
+        else:
+            timeline_data[date_key]["in_progress"] += 1
+    
+    timeline = [
+        InterviewTimeline(
+            date=date,
+            completed=data["completed"],
+            in_progress=data["in_progress"]
+        )
+        for date, data in sorted(timeline_data.items())
+    ]
+    
+    sample_quotes = []
+    for interview in interviews:
+        if interview.insight and interview.insight.quotes_json:
+            sample_quotes.extend(interview.insight.quotes_json[:2])
+        if len(sample_quotes) >= 10:
+            break
+    sample_quotes = sample_quotes[:10]
+    
+    return StudyAnalytics(
+        study_id=study.id,
+        study_title=study.title,
+        total_interviews=total_interviews,
+        completed_interviews=completed_interviews,
+        sentiment_distribution=sentiment_dist,
+        top_keywords=top_keywords,
+        response_metrics=response_metrics,
+        demographics=demographics,
+        timeline=timeline,
+        sample_quotes=sample_quotes,
+    )
 
 
