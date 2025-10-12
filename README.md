@@ -261,19 +261,7 @@ The project uses several code quality tools:
 - **Ruff**: Fast Python linter
 - **Pytest**: Testing framework
 
-### 3. Creating a Feature Branch
-
-```bash
-# Create feature branch
-git checkout -b feature/your-feature-name
-
-# Make changes and commit using conventional commits
-git commit -m "feat: add new feature"
-git commit -m "fix: resolve bug in authentication"
-git commit -m "docs: update setup instructions"
-```
-
-### 4. Running Development Server
+### 3. Running Development Server
 
 ```bash
 # Standard mode
@@ -521,37 +509,6 @@ echo $SECRET_KEY
 # Verify session creation in logs
 grep "session" logs/app.log
 ```
-
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`pytest -v`)
-5. Run linters (`pre-commit run --all-files`)
-6. Commit changes (`git commit -m 'feat: add amazing feature'`)
-7. Push to branch (`git push origin feature/amazing-feature`)
-8. Open a Pull Request
-
-### Commit Message Convention
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` New features
-- `fix:` Bug fixes
-- `docs:` Documentation changes
-- `style:` Code style changes (formatting)
-- `refactor:` Code refactoring
-- `test:` Adding or updating tests
-- `chore:` Maintenance tasks
-
-## Support
-
-For issues, questions, or contributions:
-- Open an issue on GitHub
-- Check existing documentation
-- Review API docs at `/docs`
 
 ## License
 

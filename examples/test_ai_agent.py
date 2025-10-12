@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Terminal-based test for the AI Interview Agent.
+Terminal-based test for the AI Interview Agent. (Created using AI for quick testing)
 
 Usage:
     # Requires OPENAI_API_KEY environment variable
