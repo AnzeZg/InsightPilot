@@ -3,17 +3,16 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.middleware import RequestIDMiddleware
-from app.routers import auth_dev, health, interview, studies, web, web_studies
+from app.routers import auth_dev, health, interview, studies, web, web_auth, web_studies
 from app.settings import settings
 from app.utils.logging import configure_logging
 
-# Configure logging before creating the app
 configure_logging(log_level="INFO" if settings.is_production else "DEBUG")
 logger = logging.getLogger(__name__)
 
@@ -21,15 +20,12 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan context manager for startup and shutdown events."""
-    # Startup
     logger.info(f"InsightPilot starting in {settings.app_env} mode")
     logger.info(f"Docs available at: {app.docs_url if settings.is_development else 'disabled'}")
     yield
-    # Shutdown
     logger.info("InsightPilot shutting down")
 
 
-# Create FastAPI app
 app = FastAPI(
     title="InsightPilot",
     description="AI-driven market research interview platform",
@@ -39,25 +35,60 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add middleware
 app.add_middleware(RequestIDMiddleware)
 
-# Mount static files
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
-# Include routers
 app.include_router(health.router)
 app.include_router(web.router)
+app.include_router(web_auth.router) 
 app.include_router(interview.router)  # Public interview routes (no auth required)
-app.include_router(studies.router)  # API routes for studies (JSON) - include first for priority
-app.include_router(web_studies.router)  # HTML rendering for studies
+app.include_router(studies.router)  
+app.include_router(web_studies.router) 
 
-# Dev-only auth routes (disabled in production)
 if settings.is_development:
     app.include_router(auth_dev.router)
 
-# Templates for error pages
 templates = Jinja2Templates(directory="app/templates")
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Handle HTTP exceptions, especially 401 Unauthorized.
+    
+    Redirect to login page for 401 errors on web pages.
+    """
+    accept = request.headers.get("accept", "")
+    wants_html = "text/html" in accept
+    
+    if exc.status_code == status.HTTP_401_UNAUTHORIZED and wants_html:
+        next_url = str(request.url.path)
+        if request.url.query:
+            next_url += f"?{request.url.query}"
+        return RedirectResponse(
+            url=f"/login?next={next_url}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    
+    # For API requests, return JSON (let FastAPI handle it)
+    if not wants_html:
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            content={"detail": exc.detail},
+            status_code=exc.status_code,
+        )
+    
+    return templates.TemplateResponse(
+        request=request,
+        name="error.html",
+        context={
+            "request_id": getattr(request.state, "request_id", "unknown"),
+            "error": exc.detail,
+            "status_code": exc.status_code,
+        },
+        status_code=exc.status_code,
+    )
 
 
 @app.exception_handler(Exception)
