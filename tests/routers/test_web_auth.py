@@ -11,7 +11,7 @@ async def test_login_page_renders(client: AsyncClient):
         "/login",
         headers={"Accept": "text/html"},
     )
-    
+
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert b"Sign in to your account" in response.content
@@ -25,7 +25,7 @@ async def test_register_page_renders(client: AsyncClient):
         "/register",
         headers={"Accept": "text/html"},
     )
-    
+
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
     assert b"Create your account" in response.content
@@ -39,7 +39,7 @@ async def test_login_page_with_success_message(client: AsyncClient):
         "/login?success=Account%20created!",
         headers={"Accept": "text/html"},
     )
-    
+
     assert response.status_code == 200
     assert b"Account created!" in response.content
 
@@ -53,7 +53,7 @@ async def test_register_with_browser_returns_html(client: AsyncClient):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 400
     assert "text/html" in response.headers["content-type"]
     assert b"Password must be at least 8 characters" in response.content
@@ -68,7 +68,7 @@ async def test_register_with_api_returns_json(client: AsyncClient):
         headers={"Accept": "application/json"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 400
     assert "application/json" in response.headers["content-type"]
     data = response.json()
@@ -88,7 +88,7 @@ async def test_register_password_mismatch_html(client: AsyncClient):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 400
     assert b"Passwords do not match" in response.content
 
@@ -102,7 +102,7 @@ async def test_register_success_redirects_to_login(client: AsyncClient):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 303
     assert "/login" in response.headers["location"]
     assert "success=" in response.headers["location"]
@@ -112,14 +112,14 @@ async def test_register_success_redirects_to_login(client: AsyncClient):
 async def test_register_duplicate_email_html(client: AsyncClient):
     """Test duplicate email registration shows error in HTML."""
     email = "duplicate@example.com"
-    
+
     # First registration (API)
     await client.post(
         "/auth/dev/register",
         data={"email": email, "password": "password123"},
         headers={"Accept": "application/json"},
     )
-    
+
     # Second registration (Browser)
     response = await client.post(
         "/auth/dev/register",
@@ -127,7 +127,7 @@ async def test_register_duplicate_email_html(client: AsyncClient):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 400
     assert b"Email already registered" in response.content
 
@@ -141,7 +141,7 @@ async def test_login_with_browser_shows_error_html(client: AsyncClient):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 401
     assert "text/html" in response.headers["content-type"]
     assert b"Invalid email or password" in response.content
@@ -156,7 +156,7 @@ async def test_login_with_api_returns_json_error(client: AsyncClient):
         headers={"Accept": "application/json"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 401
     assert "application/json" in response.headers["content-type"]
     data = response.json()
@@ -172,7 +172,7 @@ async def test_login_with_next_parameter(client: AsyncClient, test_user):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 303
     assert response.headers["location"] == "/app/studies/123"
     assert "set-cookie" in response.headers
@@ -183,14 +183,14 @@ async def test_401_redirects_to_login_for_browser(authenticated_client: AsyncCli
     """Test that 401 errors redirect browsers to login page."""
     # First, logout to clear session
     await authenticated_client.post("/auth/dev/logout", follow_redirects=False)
-    
+
     # Try to access protected page as a browser
     response = await authenticated_client.get(
         "/app/studies",
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 303
     assert "/login" in response.headers["location"]
     assert "next=" in response.headers["location"]
@@ -206,7 +206,7 @@ async def test_login_preserves_email_on_error(client: AsyncClient):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 401
     # Email should be preserved in the form
     assert email.encode() in response.content
@@ -222,7 +222,7 @@ async def test_register_preserves_email_on_error(client: AsyncClient):
         headers={"Accept": "text/html"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 400
     # Email should be preserved in the form
     assert email.encode() in response.content
@@ -232,7 +232,7 @@ async def test_register_preserves_email_on_error(client: AsyncClient):
 async def test_index_page_has_login_links(client: AsyncClient):
     """Test that home page links to login and register."""
     response = await client.get("/", headers={"Accept": "text/html"})
-    
+
     assert response.status_code == 200
     assert b'href="/register"' in response.content
     assert b'href="/login"' in response.content
@@ -247,7 +247,6 @@ async def test_content_negotiation_defaults_to_api(client: AsyncClient):
         data={"email": "apitest@example.com", "password": "securepass123"},
         follow_redirects=False,
     )
-    
+
     assert response.status_code == 201
     assert "application/json" in response.headers["content-type"]
-

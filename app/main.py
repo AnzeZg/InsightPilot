@@ -41,10 +41,10 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(health.router)
 app.include_router(web.router)
-app.include_router(web_auth.router) 
+app.include_router(web_auth.router)
 app.include_router(interview.router)  # Public interview routes (no auth required)
-app.include_router(studies.router)  
-app.include_router(web_studies.router) 
+app.include_router(studies.router)
+app.include_router(web_studies.router)
 
 if settings.is_development:
     app.include_router(auth_dev.router)
@@ -56,12 +56,12 @@ templates = Jinja2Templates(directory="app/templates")
 async def http_exception_handler(request: Request, exc: HTTPException):
     """
     Handle HTTP exceptions, especially 401 Unauthorized.
-    
+
     Redirect to login page for 401 errors on web pages.
     """
     accept = request.headers.get("accept", "")
     wants_html = "text/html" in accept
-    
+
     if exc.status_code == status.HTTP_401_UNAUTHORIZED and wants_html:
         next_url = str(request.url.path)
         if request.url.query:
@@ -70,15 +70,16 @@ async def http_exception_handler(request: Request, exc: HTTPException):
             url=f"/login?next={next_url}",
             status_code=status.HTTP_303_SEE_OTHER,
         )
-    
+
     # For API requests, return JSON (let FastAPI handle it)
     if not wants_html:
         from fastapi.responses import JSONResponse
+
         return JSONResponse(
             content={"detail": exc.detail},
             status_code=exc.status_code,
         )
-    
+
     return templates.TemplateResponse(
         request=request,
         name="error.html",
@@ -111,4 +112,3 @@ async def global_exception_handler(request: Request, exc: Exception) -> HTMLResp
         {"request": request, "request_id": request_id, "error": str(exc)},
         status_code=500,
     )
-

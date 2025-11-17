@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.study import Study, StudyQuestion
 
-
 # Study CRUD
 
 
@@ -39,9 +38,7 @@ def get_study_by_id(db: Session, study_id: int, load_questions: bool = True) -> 
     return db.scalar(stmt)
 
 
-def get_studies_by_user(
-    db: Session, user_id: int, skip: int = 0, limit: int = 100
-) -> list[Study]:
+def get_studies_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> list[Study]:
     """Get all studies for a user."""
     stmt = (
         select(Study)
@@ -137,4 +134,3 @@ def delete_study_question(db: Session, question_id: int) -> bool:
         db.commit()
         return True
     return False
-

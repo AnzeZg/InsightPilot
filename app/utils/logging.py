@@ -46,4 +46,3 @@ def configure_logging(log_level: str = "INFO") -> None:
     logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     root.info("Logging configured successfully")
-

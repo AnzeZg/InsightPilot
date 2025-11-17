@@ -14,9 +14,7 @@ class Settings(BaseSettings):
     secret_key: str = Field(
         ..., description="Secret key for signing sessions and tokens (required)"
     )
-    session_cookie_name: str = Field(
-        default="ip_session", description="Name of the session cookie"
-    )
+    session_cookie_name: str = Field(default="ip_session", description="Name of the session cookie")
 
     # Database
     database_url: str = Field(..., description="PostgreSQL connection URL (required)")
@@ -45,4 +43,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-

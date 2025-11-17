@@ -25,7 +25,7 @@ async def test_create_question(authenticated_client: AsyncClient, test_study):
         f"/studies/{test_study}/questions",
         json={"text": "What is your biggest challenge?", "sort_order": 0},
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["text"] == "What is your biggest challenge?"
@@ -49,10 +49,10 @@ async def test_list_questions(authenticated_client: AsyncClient, test_study):
         f"/studies/{test_study}/questions",
         json={"text": "Question 3", "sort_order": 2},
     )
-    
+
     # List questions
     response = await authenticated_client.get(f"/studies/{test_study}/questions")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 3
@@ -73,10 +73,10 @@ async def test_reorder_questions(authenticated_client: AsyncClient, test_study):
         f"/studies/{test_study}/questions",
         json={"text": "Second", "sort_order": 1},
     )
-    
+
     q1_id = q1.json()["id"]
     q2_id = q2.json()["id"]
-    
+
     # Reorder (swap them)
     response = await authenticated_client.post(
         f"/studies/{test_study}/questions/reorder",
@@ -87,9 +87,9 @@ async def test_reorder_questions(authenticated_client: AsyncClient, test_study):
             ]
         },
     )
-    
+
     assert response.status_code == 204
-    
+
     # Verify new order
     list_response = await authenticated_client.get(f"/studies/{test_study}/questions")
     questions = list_response.json()
@@ -108,7 +108,7 @@ async def test_reorder_invalid_question(authenticated_client: AsyncClient, test_
             ]
         },
     )
-    
+
     assert response.status_code == 400
 
 
@@ -121,13 +121,11 @@ async def test_delete_question(authenticated_client: AsyncClient, test_study):
         json={"text": "To delete", "sort_order": 0},
     )
     question_id = create_response.json()["id"]
-    
+
     # Delete question
-    response = await authenticated_client.delete(
-        f"/studies/{test_study}/questions/{question_id}"
-    )
+    response = await authenticated_client.delete(f"/studies/{test_study}/questions/{question_id}")
     assert response.status_code == 204
-    
+
     # Verify it's gone
     list_response = await authenticated_client.get(f"/studies/{test_study}/questions")
     assert len(list_response.json()) == 0
@@ -145,18 +143,16 @@ async def test_questions_isolated_by_study(authenticated_client: AsyncClient):
         "/studies/",
         json={"title": "Study 2", "description": "Second", "consent_text": "Consent"},
     )
-    
+
     study1_id = study1_response.json()["id"]
     study2_id = study2_response.json()["id"]
-    
+
     # Add question to study 1
     await authenticated_client.post(
         f"/studies/{study1_id}/questions",
         json={"text": "Study 1 question", "sort_order": 0},
     )
-    
+
     # Study 2 should have no questions
     study2_questions = await authenticated_client.get(f"/studies/{study2_id}/questions")
     assert len(study2_questions.json()) == 0
-
-

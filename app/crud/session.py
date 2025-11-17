@@ -1,7 +1,7 @@
 """CRUD operations for Session model."""
 
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session as DBSession
@@ -19,13 +19,11 @@ def generate_csrf_secret() -> str:
     return secrets.token_urlsafe(32)
 
 
-def create_session(
-    db: DBSession, user_id: int, expires_in_days: int = 7
-) -> Session:
+def create_session(db: DBSession, user_id: int, expires_in_days: int = 7) -> Session:
     """Create a new session."""
     session_id = generate_session_id()
     csrf_secret = generate_csrf_secret()
-    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=expires_in_days)
+    expires_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=expires_in_days)
 
     session = Session(
         id=session_id, user_id=user_id, expires_at=expires_at, csrf_secret=csrf_secret
@@ -49,7 +47,7 @@ def get_sessions_by_user(db: DBSession, user_id: int) -> list[Session]:
 
 def is_session_valid(session: Session) -> bool:
     """Check if session is still valid (not expired)."""
-    return session.expires_at > datetime.now(timezone.utc).replace(tzinfo=None)
+    return session.expires_at > datetime.now(UTC).replace(tzinfo=None)
 
 
 def delete_session(db: DBSession, session_id: str) -> bool:
@@ -64,7 +62,7 @@ def delete_session(db: DBSession, session_id: str) -> bool:
 
 def delete_expired_sessions(db: DBSession) -> int:
     """Delete all expired sessions. Returns count of deleted sessions."""
-    stmt = select(Session).where(Session.expires_at < datetime.now(timezone.utc).replace(tzinfo=None))
+    stmt = select(Session).where(Session.expires_at < datetime.now(UTC).replace(tzinfo=None))
     expired = db.scalars(stmt).all()
     count = len(expired)
     for session in expired:
@@ -82,4 +80,3 @@ def delete_user_sessions(db: DBSession, user_id: int) -> int:
         db.delete(session)
     db.commit()
     return count
-

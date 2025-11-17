@@ -26,26 +26,24 @@ def get_current_user(
 ) -> User:
     """Get current authenticated user from session."""
     session = session_crud.get_session_by_id(db, session_id)
-    
+
     if not session:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid session",
         )
-    
+
     if not session_crud.is_session_valid(session):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Session expired",
         )
-    
+
     user = db.get(User, session.user_id)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
-    
+
     return user
-
-

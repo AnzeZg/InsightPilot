@@ -1,6 +1,6 @@
 """Session model for researcher authentication."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -15,7 +15,9 @@ class Session(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(), default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(), default=lambda: datetime.now(UTC).replace(tzinfo=None), nullable=False
+    )
     expires_at: Mapped[datetime] = mapped_column(DateTime(), nullable=False)
     csrf_secret: Mapped[str] = mapped_column(String(64), nullable=False)
 
@@ -24,4 +26,3 @@ class Session(Base):
 
     def __repr__(self) -> str:
         return f"<Session(id={self.id}, user_id={self.user_id})>"
-

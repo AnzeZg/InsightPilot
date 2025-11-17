@@ -73,13 +73,19 @@ skip = [".venv", "__pycache__", "alembic/versions"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-select = ["E", "F", "I", "UP", "N", "W"]
-ignore = []
 exclude = [
     ".venv",
     "__pycache__",
     "alembic/versions",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "N", "W"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"app/models/*.py" = ["F821"]  # SQLAlchemy forward references
+"tests/conftest.py" = ["N806"]  # Test fixtures can use PascalCase
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

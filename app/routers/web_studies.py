@@ -41,9 +41,7 @@ def list_studies_page(
 ):
     """Render the studies list page."""
     studies = study_crud.get_studies_by_user(db, current_user.id)
-    return templates.TemplateResponse(
-        "studies/list.html", {"request": request, "studies": studies}
-    )
+    return templates.TemplateResponse("studies/list.html", {"request": request, "studies": studies})
 
 
 @router.post("/studies/", response_class=RedirectResponse)
@@ -64,9 +62,7 @@ def create_study_form(
         consent_text=consent_text,
         max_agent_turns=max_agent_turns,
     )
-    return RedirectResponse(
-        url=f"/app/studies/{study.id}", status_code=status.HTTP_303_SEE_OTHER
-    )
+    return RedirectResponse(url=f"/app/studies/{study.id}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/studies/{study_id}", response_class=HTMLResponse)
@@ -80,7 +76,7 @@ def get_study_page(
     study = verify_study_owner(study_id, current_user, db)
     questions = study_crud.get_study_questions(db, study_id)
     invites = invite_crud.get_invites_by_study(db, study_id)
-    
+
     return templates.TemplateResponse(
         "studies/detail.html",
         {
@@ -105,12 +101,12 @@ def update_study_form(
     db: Session = Depends(get_db),
 ):
     """Update or delete a study from form data."""
-    study = verify_study_owner(study_id, current_user, db)
-    
+    verify_study_owner(study_id, current_user, db)
+
     if method == "DELETE":
         study_crud.delete_study(db, study_id)
         return RedirectResponse(url="/app/studies", status_code=status.HTTP_303_SEE_OTHER)
-    
+
     elif method == "PATCH":
         study_crud.update_study(
             db,
@@ -123,10 +119,8 @@ def update_study_form(
         return RedirectResponse(
             url=f"/app/studies/{study_id}", status_code=status.HTTP_303_SEE_OTHER
         )
-    
-    return RedirectResponse(
-        url=f"/app/studies/{study_id}", status_code=status.HTTP_303_SEE_OTHER
-    )
+
+    return RedirectResponse(url=f"/app/studies/{study_id}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/studies/{study_id}/questions", response_class=HTMLResponse)
@@ -139,14 +133,14 @@ def add_question_htmx(
 ):
     """Add a question and return the updated questions partial."""
     verify_study_owner(study_id, current_user, db)
-    
+
     # Calculate next sort_order (max existing + 1, or 0 if no questions)
     existing_questions = study_crud.get_study_questions(db, study_id)
     next_sort_order = max([q.sort_order for q in existing_questions], default=-1) + 1
-    
+
     study_crud.create_study_question(db, study_id, text, next_sort_order)
     questions = study_crud.get_study_questions(db, study_id)
-    
+
     return templates.TemplateResponse(
         "studies/_questions.html",
         {"request": request, "questions": questions, "study_id": study_id},
@@ -165,7 +159,7 @@ def delete_question_htmx(
     verify_study_owner(study_id, current_user, db)
     study_crud.delete_study_question(db, question_id)
     questions = study_crud.get_study_questions(db, study_id)
-    
+
     return templates.TemplateResponse(
         "studies/_questions.html",
         {"request": request, "questions": questions, "study_id": study_id},
@@ -181,17 +175,17 @@ async def reorder_questions_htmx(
 ):
     """Reorder questions and return the updated questions partial."""
     verify_study_owner(study_id, current_user, db)
-    
+
     # Parse JSON body
     body = await request.json()
     questions_data = body.get("questions", [])
-    
+
     # Convert to list of tuples for reorder_questions
     question_updates = [(q["question_id"], q["sort_order"]) for q in questions_data]
     study_crud.reorder_questions(db, question_updates)
-    
+
     questions = study_crud.get_study_questions(db, study_id)
-    
+
     return templates.TemplateResponse(
         "studies/_questions.html",
         {"request": request, "questions": questions, "study_id": study_id},
@@ -209,7 +203,7 @@ def create_invite_htmx(
     verify_study_owner(study_id, current_user, db)
     invite_crud.create_invite(db, study_id)
     invites = invite_crud.get_invites_by_study(db, study_id)
-    
+
     return templates.TemplateResponse(
         "studies/_invites.html",
         {"request": request, "invites": invites},
@@ -228,7 +222,7 @@ def delete_invite_htmx(
     verify_study_owner(study_id, current_user, db)
     invite_crud.delete_invite(db, invite_id)
     invites = invite_crud.get_invites_by_study(db, study_id)
-    
+
     return templates.TemplateResponse(
         "studies/_invites.html",
         {"request": request, "invites": invites},
@@ -244,23 +238,25 @@ def list_interviews_page(
 ):
     """Render the interviews list page for a study."""
     study = verify_study_owner(study_id, current_user, db)
-    
+
     interviews = interview_crud.get_interviews_by_study(db, study_id, load_relations=True)
-    
+
     interview_list = []
     for interview in interviews:
         message_count = interview_crud.get_message_count(db, interview.id)
-        interview_list.append({
-            "id": interview.id,
-            "study_id": interview.study_id,
-            "started_at": interview.started_at,
-            "completed_at": interview.completed_at,
-            "agent_turns": interview.agent_turns,
-            "interviewee": interview.interviewee,
-            "insight": interview.insight,
-            "message_count": message_count,
-        })
-    
+        interview_list.append(
+            {
+                "id": interview.id,
+                "study_id": interview.study_id,
+                "started_at": interview.started_at,
+                "completed_at": interview.completed_at,
+                "agent_turns": interview.agent_turns,
+                "interviewee": interview.interviewee,
+                "insight": interview.insight,
+                "message_count": message_count,
+            }
+        )
+
     return templates.TemplateResponse(
         "studies/interviews.html",
         {
@@ -281,21 +277,21 @@ def view_transcript_page(
 ):
     """Render the interview transcript page."""
     study = verify_study_owner(study_id, current_user, db)
-    
+
     interview = interview_crud.get_interview_by_id(db, interview_id, load_all=True)
-    
+
     if not interview:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found",
         )
-    
+
     if interview.study_id != study_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Interview not found",
         )
-    
+
     return templates.TemplateResponse(
         "studies/transcript.html",
         {
@@ -318,7 +314,7 @@ def analytics_page(
 ):
     """Render the analytics page for a study."""
     study = verify_study_owner(study_id, current_user, db)
-    
+
     return templates.TemplateResponse(
         "studies/analytics.html",
         {
@@ -326,5 +322,3 @@ def analytics_page(
             "study": study,
         },
     )
-
-

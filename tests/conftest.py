@@ -21,15 +21,15 @@ def test_db():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    
+
     # Create all tables
     Base.metadata.create_all(bind=engine)
-    
+
     # Create session factory
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    
+
     yield TestingSessionLocal
-    
+
     # Cleanup
     Base.metadata.drop_all(bind=engine)
 
@@ -37,17 +37,18 @@ def test_db():
 @pytest.fixture
 def client(test_db):
     """Create test client with dependency override."""
+
     def override_get_db():
         db = test_db()
         try:
             yield db
         finally:
             db.close()
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
     yield AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
-    
+
     app.dependency_overrides.clear()
 
 
@@ -73,4 +74,3 @@ async def authenticated_client(client: AsyncClient, test_user):
     assert response.status_code == 303
     # Cookie should be set automatically
     return client
-

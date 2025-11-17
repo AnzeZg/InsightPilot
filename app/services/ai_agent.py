@@ -1,19 +1,19 @@
 """AI Agent service for conducting research interviews."""
 
 import os
-from typing import Optional
 
 from openai import OpenAI
 
 
-def get_openai_api_key() -> Optional[str]:
+def get_openai_api_key() -> str | None:
     """Get OpenAI API key from environment or settings."""
     key = os.getenv("OPENAI_API_KEY")
     if key:
         return key
-    
+
     try:
         from app.settings import settings
+
         return settings.openai_api_key
     except Exception:
         return None
@@ -22,10 +22,10 @@ def get_openai_api_key() -> Optional[str]:
 class AIInterviewAgent:
     """AI agent that conducts research interviews based on study context."""
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Initialize the AI agent.
-        
+
         Args:
             api_key: OpenAI API key (defaults to OPENAI_API_KEY env var or settings)
         """
@@ -36,7 +36,7 @@ class AIInterviewAgent:
                 "in your .env file or pass api_key parameter."
             )
         self.client = OpenAI(api_key=self.api_key)
-        self.model = "gpt-4o-mini" 
+        self.model = "gpt-4o-mini"
 
     def generate_system_prompt(
         self,
@@ -47,18 +47,18 @@ class AIInterviewAgent:
     ) -> str:
         """
         Generate the system prompt for the AI agent.
-        
+
         Args:
             study_title: Title of the research study
             study_description: Description of the study
             study_questions: List of research questions to explore
             turns_remaining: Number of turns remaining in the interview
-            
+
         Returns:
             System prompt string
         """
         questions_text = "\n".join([f"- {q}" for q in study_questions])
-        
+
         return f"""You are an AI research interviewer conducting a study titled: "{study_title}"
 
 Study context: {study_description}
@@ -96,7 +96,7 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
     ) -> str:
         """
         Get AI response based on conversation context.
-        
+
         Args:
             study_title: Title of the research study
             study_description: Description of the study
@@ -104,22 +104,22 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
             conversation_history: List of previous messages [{"role": "user"|"assistant", "content": "..."}]
             current_turn: Current turn number (0-indexed)
             max_turns: Maximum number of agent turns allowed
-            
+
         Returns:
             AI-generated response string
         """
         turns_remaining = max_turns - current_turn
-        
+
         system_prompt = self.generate_system_prompt(
             study_title=study_title,
             study_description=study_description,
             study_questions=study_questions,
             turns_remaining=turns_remaining,
         )
-        
+
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(conversation_history[-10:])
-        
+
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -129,9 +129,9 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
                 presence_penalty=0.6,
                 frequency_penalty=0.3,
             )
-            
+
             return response.choices[0].message.content.strip()
-            
+
         except Exception as e:
             return self._get_error_fallback(str(e))
 
@@ -144,13 +144,13 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
     ) -> str:
         """
         Generate the first message to start the interview.
-        
+
         Args:
             study_title: Title of the research study
             study_description: Description of the study
             study_questions: List of research questions
             interviewee_name: Name of the interviewee
-            
+
         Returns:
             Opening message string
         """
@@ -175,14 +175,13 @@ Be friendly and professional."""
                 temperature=0.7,
                 max_tokens=200,
             )
-            
+
             return response.choices[0].message.content.strip()
-            
-        except Exception as e:
+
+        except Exception:
             return f"Hello {interviewee_name}! Thank you for participating in this research study about {study_title}. I'm excited to hear your thoughts. To begin, could you share your initial perspective on this topic?"
 
     def _get_error_fallback(self, error_message: str) -> str:
         """Provide a graceful fallback response when API fails."""
         print(f"AI Agent Error: {error_message}")
         return "Thank you for your response. Could you tell me more about that?"
-

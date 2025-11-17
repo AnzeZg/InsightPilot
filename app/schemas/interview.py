@@ -115,7 +115,7 @@ class DemographicBreakdown(BaseModel):
     """Demographic breakdown for a specific field."""
 
     field: str
-    values: dict[str, int]  
+    values: dict[str, int]
 
 
 class ResponseMetrics(BaseModel):

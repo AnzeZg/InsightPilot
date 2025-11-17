@@ -1,6 +1,6 @@
 """Tests for invite landing page flow."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -33,18 +33,18 @@ async def test_invite_landing_page_valid(client: AsyncClient, db):
         description="Test study description",
         consent_text="I consent to participate",
     )
-    
+
     # Create invite
     invite = invite_crud.create_invite(db, study_id=study.id)
-    
+
     # Access landing page
     response = await client.get(f"/interview/{invite.invite_code}")
-    
+
     assert response.status_code == 200
     assert "Test Study" in response.text
     assert "Test study description" in response.text
     assert "Continue to Consent Form" in response.text
-    
+
     # Verify status updated to 'opened'
     db.refresh(invite)
     assert invite.status == InviteStatus.OPENED.value
@@ -54,7 +54,7 @@ async def test_invite_landing_page_valid(client: AsyncClient, db):
 async def test_invite_landing_page_not_found(client: AsyncClient, db):
     """Test landing page with invalid invite code."""
     response = await client.get("/interview/invalid_code_12345")
-    
+
     assert response.status_code == 404
     assert "Invitation Not Found" in response.text
 
@@ -71,18 +71,18 @@ async def test_invite_landing_page_expired(client: AsyncClient, db):
         description="Test study description",
         consent_text="I consent to participate",
     )
-    
+
     # Create expired invite
-    expired_time = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=1)
+    expired_time = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=1)
     invite = invite_crud.create_invite(
         db,
         study_id=study.id,
         expires_at=expired_time,
     )
-    
+
     # Access landing page
     response = await client.get(f"/interview/{invite.invite_code}")
-    
+
     assert response.status_code == 200
     assert "Invite Has Expired" in response.text
 
@@ -99,14 +99,14 @@ async def test_invite_landing_page_completed(client: AsyncClient, db):
         description="Test study description",
         consent_text="I consent to participate",
     )
-    
+
     # Create invite and mark as completed
     invite = invite_crud.create_invite(db, study_id=study.id)
     invite_crud.update_invite_status(db, invite.id, InviteStatus.COMPLETED)
-    
+
     # Access landing page
     response = await client.get(f"/interview/{invite.invite_code}")
-    
+
     assert response.status_code == 200
     assert "Already Completed" in response.text
 
@@ -123,20 +123,19 @@ async def test_invite_status_only_updated_once(client: AsyncClient, db):
         description="Test study description",
         consent_text="I consent to participate",
     )
-    
+
     # Create invite
     invite = invite_crud.create_invite(db, study_id=study.id)
     assert invite.status == InviteStatus.CREATED.value
-    
+
     # First visit - should update to 'opened'
     response = await client.get(f"/interview/{invite.invite_code}")
     assert response.status_code == 200
     db.refresh(invite)
     assert invite.status == InviteStatus.OPENED.value
-    
+
     # Second visit - should remain 'opened'
     response = await client.get(f"/interview/{invite.invite_code}")
     assert response.status_code == 200
     db.refresh(invite)
     assert invite.status == InviteStatus.OPENED.value
-

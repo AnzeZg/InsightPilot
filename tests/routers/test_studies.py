@@ -16,7 +16,7 @@ async def test_create_study(authenticated_client: AsyncClient):
             "max_agent_turns": 10,
         },
     )
-    
+
     assert response.status_code == 201
     data = response.json()
     assert data["title"] == "Product Feedback Study"
@@ -36,7 +36,7 @@ async def test_create_study_unauthenticated(client: AsyncClient):
             "consent_text": "I consent",
         },
     )
-    
+
     assert response.status_code == 401
 
 
@@ -60,10 +60,10 @@ async def test_list_studies(authenticated_client: AsyncClient):
             "consent_text": "Consent",
         },
     )
-    
+
     # List studies
     response = await authenticated_client.get("/studies/")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 2
@@ -83,10 +83,10 @@ async def test_get_study(authenticated_client: AsyncClient):
         },
     )
     study_id = create_response.json()["id"]
-    
+
     # Get study
     response = await authenticated_client.get(f"/studies/{study_id}")
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["id"] == study_id
@@ -113,13 +113,13 @@ async def test_update_study(authenticated_client: AsyncClient):
         },
     )
     study_id = create_response.json()["id"]
-    
+
     # Update study
     response = await authenticated_client.patch(
         f"/studies/{study_id}",
         json={"title": "Updated Title"},
     )
-    
+
     assert response.status_code == 200
     data = response.json()
     assert data["title"] == "Updated Title"
@@ -139,11 +139,11 @@ async def test_delete_study(authenticated_client: AsyncClient):
         },
     )
     study_id = create_response.json()["id"]
-    
+
     # Delete study
     response = await authenticated_client.delete(f"/studies/{study_id}")
     assert response.status_code == 204
-    
+
     # Verify it's gone
     get_response = await authenticated_client.get(f"/studies/{study_id}")
     assert get_response.status_code == 404
@@ -156,7 +156,5 @@ async def test_create_study_validation(authenticated_client: AsyncClient):
         "/studies/",
         json={"title": ""},  # Empty title should fail
     )
-    
+
     assert response.status_code == 422  # Validation error
-
-

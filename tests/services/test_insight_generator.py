@@ -21,7 +21,9 @@ def mock_openai_client():
         mock_openai.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.choices[0].message.content = """{
+        mock_response.choices[
+            0
+        ].message.content = """{
             "summary": "The participant discussed their experience with the product interface.",
             "sentiment": "positive",
             "keywords": ["user interface", "design", "experience"],
@@ -73,7 +75,7 @@ def sample_interview(db: Session):
 
     interview = interview_crud.create_interview(db, study_id=study.id, invite_id=invite.id)
 
-    interviewee = interview_crud.create_interviewee(
+    _ = interview_crud.create_interviewee(
         db, interview_id=interview.id, name="Test User", email="test@example.com"
     )
 
@@ -135,7 +137,9 @@ async def test_generate_insights_validates_output(db: Session, sample_interview)
         mock_openai.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.choices[0].message.content = """{
+        mock_response.choices[
+            0
+        ].message.content = """{
             "summary": "Test summary",
             "sentiment": "INVALID_SENTIMENT",
             "keywords": ["test"],
@@ -283,9 +287,7 @@ async def test_fallback_extraction_no_user_messages(db: Session):
     invite = invite_crud.create_invite(db, study_id=study.id)
     interview = interview_crud.create_interview(db, study_id=study.id, invite_id=invite.id)
 
-    interview_crud.create_message(
-        db, interview_id=interview.id, role="assistant", content="Hello!"
-    )
+    interview_crud.create_message(db, interview_id=interview.id, role="assistant", content="Hello!")
 
     generator = InsightGenerator()
     messages = interview_crud.get_messages_by_interview(db, interview.id)
@@ -293,4 +295,3 @@ async def test_fallback_extraction_no_user_messages(db: Session):
 
     assert "No" in insights["summary"] and "recorded" in insights["summary"]
     assert insights["notable_quotes"] == []
-

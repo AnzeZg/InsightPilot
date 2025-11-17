@@ -60,5 +60,3 @@ def clear_session(response: Response) -> None:
         response: Starlette response object
     """
     response.delete_cookie(SESSION_COOKIE)
-
-

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 
 class InviteCreate(BaseModel):
@@ -25,4 +25,3 @@ class InviteResponse(BaseModel):
 
     class Config:
         from_attributes = True
-

@@ -21,4 +21,3 @@ async def index(request: Request):
         HTMLResponse: Rendered index template
     """
     return templates.TemplateResponse("index.html", {"request": request})
-

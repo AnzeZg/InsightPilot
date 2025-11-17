@@ -1,12 +1,11 @@
 """CRUD operations for Interview, Interviewee, Message, and Insight models."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.interview import Insight, Interview, Interviewee, Message
-
 
 # Interview CRUD
 
@@ -36,7 +35,9 @@ def get_interview_by_id(
     return db.scalar(stmt)
 
 
-def get_interviews_by_study(db: Session, study_id: int, load_relations: bool = False) -> list[Interview]:
+def get_interviews_by_study(
+    db: Session, study_id: int, load_relations: bool = False
+) -> list[Interview]:
     """Get all interviews for a study."""
     stmt = (
         select(Interview)
@@ -61,7 +62,7 @@ def complete_interview(db: Session, interview_id: int) -> Interview | None:
     """Mark interview as completed."""
     interview = db.get(Interview, interview_id)
     if interview:
-        interview.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        interview.completed_at = datetime.now(UTC).replace(tzinfo=None)
         db.commit()
         db.refresh(interview)
     return interview
@@ -121,7 +122,9 @@ def create_message(db: Session, interview_id: int, role: str, content: str) -> M
     return message
 
 
-def get_messages_by_interview(db: Session, interview_id: int, limit: int | None = None) -> list[Message]:
+def get_messages_by_interview(
+    db: Session, interview_id: int, limit: int | None = None
+) -> list[Message]:
     """Get messages for an interview, ordered by time."""
     stmt = select(Message).where(Message.interview_id == interview_id).order_by(Message.created_at)
     if limit:
@@ -194,4 +197,3 @@ def update_insight(
         db.commit()
         db.refresh(insight)
     return insight
-

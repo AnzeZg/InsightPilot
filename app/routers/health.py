@@ -14,4 +14,3 @@ async def health_check():
         dict: Simple OK status
     """
     return {"ok": True, "service": "insightpilot"}
-
