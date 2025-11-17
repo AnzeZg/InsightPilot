@@ -35,6 +35,7 @@ from app.schemas.study import (
     StudyResponse,
     StudyUpdate,
 )
+from app.services.analytics_service import StudyAnalyticsService
 
 router = APIRouter(prefix="/studies", tags=["studies"])
 
@@ -567,126 +568,10 @@ def get_study_analytics(
     """
     Get aggregated analytics for a study.
 
-    Returns:
-    - Sentiment distribution
-    - Top keywords across all interviews
-    - Response metrics (avg length, message count)
-    - Demographics breakdown
-    - Interview timeline
-    - Sample quotes
+    Returns comprehensive analytics including sentiment, keywords,
+    metrics, demographics, timeline, and sample quotes.
     """
     study = verify_study_owner(study_id, current_user, db)
 
-    interviews = interview_crud.get_interviews_by_study(db, study_id, load_relations=True)
-
-    total_interviews = len(interviews)
-    completed_interviews = sum(1 for i in interviews if i.completed_at)
-
-    sentiment_counts = {"positive": 0, "neutral": 0, "negative": 0}
-    for interview in interviews:
-        if interview.insight and interview.insight.sentiment:
-            sentiment = interview.insight.sentiment.lower()
-            if sentiment in sentiment_counts:
-                sentiment_counts[sentiment] += 1
-
-    sentiment_dist = SentimentDistribution(
-        positive=sentiment_counts["positive"],
-        neutral=sentiment_counts["neutral"],
-        negative=sentiment_counts["negative"],
-        total=sum(sentiment_counts.values()),
-    )
-
-    keyword_freq = {}
-    for interview in interviews:
-        if interview.insight and interview.insight.keywords_json:
-            for keyword in interview.insight.keywords_json:
-                keyword_lower = keyword.lower()
-                keyword_freq[keyword_lower] = keyword_freq.get(keyword_lower, 0) + 1
-
-    top_keywords = [
-        KeywordFrequency(keyword=kw, count=count)
-        for kw, count in sorted(keyword_freq.items(), key=lambda x: x[1], reverse=True)[
-            :TOP_KEYWORDS_LIMIT
-        ]
-    ]
-
-    total_messages = 0
-    total_response_length = 0
-    user_message_count = 0
-
-    for interview in interviews:
-        messages = interview_crud.get_messages_by_interview(db, interview.id)
-        total_messages += len(messages)
-
-        for msg in messages:
-            if msg.role == "user":
-                total_response_length += len(msg.content)
-                user_message_count += 1
-
-    avg_message_count = total_messages / total_interviews if total_interviews > 0 else 0
-    avg_response_length = (
-        total_response_length / user_message_count if user_message_count > 0 else 0
-    )
-    avg_conversation_length = (
-        total_response_length / completed_interviews if completed_interviews > 0 else 0
-    )
-
-    response_metrics = ResponseMetrics(
-        avg_message_count=round(avg_message_count, 2),
-        avg_response_length=round(avg_response_length, 2),
-        avg_conversation_length=round(avg_conversation_length, 2),
-        total_messages=total_messages,
-    )
-
-    demographics_data = {}
-    for interview in interviews:
-        if interview.interviewee and interview.interviewee.demographics_json:
-            for field, value in interview.interviewee.demographics_json.items():
-                if value:
-                    if field not in demographics_data:
-                        demographics_data[field] = {}
-                    demographics_data[field][str(value)] = (
-                        demographics_data[field].get(str(value), 0) + 1
-                    )
-
-    demographics = [
-        DemographicBreakdown(field=field, values=values)
-        for field, values in demographics_data.items()
-    ]
-
-    from collections import defaultdict
-
-    timeline_data = defaultdict(lambda: {"completed": 0, "in_progress": 0})
-
-    for interview in interviews:
-        date_key = interview.started_at.strftime("%Y-%m-%d")
-        if interview.completed_at:
-            timeline_data[date_key]["completed"] += 1
-        else:
-            timeline_data[date_key]["in_progress"] += 1
-
-    timeline = [
-        InterviewTimeline(date=date, completed=data["completed"], in_progress=data["in_progress"])
-        for date, data in sorted(timeline_data.items())
-    ]
-
-    sample_quotes = []
-    for interview in interviews:
-        if interview.insight and interview.insight.quotes_json:
-            sample_quotes.extend(interview.insight.quotes_json[:2])
-        if len(sample_quotes) >= SAMPLE_QUOTES_LIMIT:
-            break
-    sample_quotes = sample_quotes[:SAMPLE_QUOTES_LIMIT]
-
-    return StudyAnalytics(
-        study_id=study.id,
-        study_title=study.title,
-        total_interviews=total_interviews,
-        completed_interviews=completed_interviews,
-        sentiment_distribution=sentiment_dist,
-        top_keywords=top_keywords,
-        response_metrics=response_metrics,
-        demographics=demographics,
-        timeline=timeline,
-        sample_quotes=sample_quotes,
-    )
+    analytics_service = StudyAnalyticsService(db)
+    return analytics_service.generate_analytics(study_id, study)
