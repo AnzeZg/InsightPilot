@@ -9,6 +9,7 @@ from passlib.hash import argon2
 from sqlalchemy.orm import Session
 
 from app.auth.sessions import clear_session, set_session
+from app.constants import DEV_DEFAULT_PASSWORD, DEV_TEST_USER_EMAIL
 from app.crud import session as session_crud
 from app.crud import user as user_crud
 from app.db.session import get_db
@@ -217,8 +218,8 @@ def dev_quick_auth(db: Session = Depends(get_db)):
             detail="Not found",
         )
 
-    email = "test@example.com"
-    password = "password123"
+    email = DEV_TEST_USER_EMAIL
+    password = DEV_DEFAULT_PASSWORD
 
     # Check if user exists, create if not
     user = user_crud.get_user_by_email(db, email)

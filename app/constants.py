@@ -1,0 +1,31 @@
+"""Application-wide constants."""
+
+# Session configuration
+SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7  # 7 days
+SESSION_COOKIE_SALT = "session"
+
+# AI Agent configuration
+DEFAULT_AI_MODEL = "gpt-4o-mini"
+AI_MAX_TOKENS = 300
+AI_TEMPERATURE = 0.7
+AI_INITIAL_MAX_TOKENS = 200
+AI_PRESENCE_PENALTY = 0.6
+AI_FREQUENCY_PENALTY = 0.3
+
+# Insight Generation
+INSIGHT_GENERATION_TEMPERATURE = 0.3
+
+# Analytics configuration
+TOP_KEYWORDS_LIMIT = 20
+SAMPLE_QUOTES_LIMIT = 10
+RECENT_MESSAGES_DEFAULT = 8
+MAX_CONVERSATION_HISTORY = 10
+
+# Development/Testing
+DEV_DEFAULT_PASSWORD = "password123"
+DEV_TEST_USER_EMAIL = "test@example.com"
+
+# Agent Interview
+MAX_INTERVIEW_TURNS = 10
+MAX_MESSAGE_LENGTH = 2000
+

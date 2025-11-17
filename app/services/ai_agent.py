@@ -4,6 +4,15 @@ import os
 
 from openai import OpenAI
 
+from app.constants import (
+    AI_FREQUENCY_PENALTY,
+    AI_INITIAL_MAX_TOKENS,
+    AI_MAX_TOKENS,
+    AI_PRESENCE_PENALTY,
+    AI_TEMPERATURE,
+    DEFAULT_AI_MODEL,
+)
+
 
 def get_openai_api_key() -> str | None:
     """Get OpenAI API key from environment or settings."""
@@ -36,7 +45,7 @@ class AIInterviewAgent:
                 "in your .env file or pass api_key parameter."
             )
         self.client = OpenAI(api_key=self.api_key)
-        self.model = "gpt-4o-mini"
+        self.model = DEFAULT_AI_MODEL
 
     def generate_system_prompt(
         self,
@@ -124,10 +133,10 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0.7,
-                max_tokens=300,
-                presence_penalty=0.6,
-                frequency_penalty=0.3,
+                temperature=AI_TEMPERATURE,
+                max_tokens=AI_MAX_TOKENS,
+                presence_penalty=AI_PRESENCE_PENALTY,
+                frequency_penalty=AI_FREQUENCY_PENALTY,
             )
 
             return response.choices[0].message.content.strip()
@@ -172,8 +181,8 @@ Be friendly and professional."""
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "system", "content": system_prompt}],
-                temperature=0.7,
-                max_tokens=200,
+                temperature=AI_TEMPERATURE,
+                max_tokens=AI_INITIAL_MAX_TOKENS,
             )
 
             return response.choices[0].message.content.strip()

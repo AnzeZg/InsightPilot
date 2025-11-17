@@ -6,13 +6,16 @@ from itsdangerous import URLSafeSerializer
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.constants import SESSION_COOKIE_SALT, SESSION_MAX_AGE_SECONDS
 from app.settings import settings
 
-serializer = URLSafeSerializer(settings.secret_key, salt="session")
+serializer = URLSafeSerializer(settings.secret_key, salt=SESSION_COOKIE_SALT)
 SESSION_COOKIE = settings.session_cookie_name
 
 
-def set_session(response: Response, session_id: str, max_age: int = 60 * 60 * 24 * 7) -> None:
+def set_session(
+    response: Response, session_id: str, max_age: int = SESSION_MAX_AGE_SECONDS
+) -> None:
     """
     Set session cookie on response.
 

@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
+from app.constants import SAMPLE_QUOTES_LIMIT, TOP_KEYWORDS_LIMIT
 from app.crud import interview as interview_crud
 from app.crud import invite as invite_crud
 from app.crud import study as study_crud
@@ -604,7 +605,9 @@ def get_study_analytics(
 
     top_keywords = [
         KeywordFrequency(keyword=kw, count=count)
-        for kw, count in sorted(keyword_freq.items(), key=lambda x: x[1], reverse=True)[:20]
+        for kw, count in sorted(keyword_freq.items(), key=lambda x: x[1], reverse=True)[
+            :TOP_KEYWORDS_LIMIT
+        ]
     ]
 
     total_messages = 0
@@ -671,9 +674,9 @@ def get_study_analytics(
     for interview in interviews:
         if interview.insight and interview.insight.quotes_json:
             sample_quotes.extend(interview.insight.quotes_json[:2])
-        if len(sample_quotes) >= 10:
+        if len(sample_quotes) >= SAMPLE_QUOTES_LIMIT:
             break
-    sample_quotes = sample_quotes[:10]
+    sample_quotes = sample_quotes[:SAMPLE_QUOTES_LIMIT]
 
     return StudyAnalytics(
         study_id=study.id,

@@ -7,6 +7,7 @@ from typing import Any
 from openai import OpenAI
 from sqlalchemy.orm import Session
 
+from app.constants import DEFAULT_AI_MODEL, INSIGHT_GENERATION_TEMPERATURE
 from app.crud import interview as interview_crud
 from app.models.interview import Message
 from app.services.ai_agent import get_openai_api_key
@@ -82,7 +83,7 @@ Focus on the participant's responses, not the interviewer's questions.
 
         try:
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=DEFAULT_AI_MODEL,
                 messages=[
                     {
                         "role": "system",
@@ -90,7 +91,7 @@ Focus on the participant's responses, not the interviewer's questions.
                     },
                     {"role": "user", "content": prompt},
                 ],
-                temperature=0.3,
+                temperature=INSIGHT_GENERATION_TEMPERATURE,
                 response_format={"type": "json_object"},
             )
 

@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
+from app.constants import MAX_MESSAGE_LENGTH
 from app.crud import interview as interview_crud
 from app.crud import invite as invite_crud
 from app.db.session import get_db
@@ -447,8 +448,8 @@ async def send_message(
     if not message.strip():
         return JSONResponse(status_code=400, content={"error": "Message cannot be empty"})
 
-    if len(message) > 2000:
-        message = message[:2000]
+    if len(message) > MAX_MESSAGE_LENGTH:
+        message = message[:MAX_MESSAGE_LENGTH]
 
     interview_crud.create_message(
         db,
