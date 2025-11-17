@@ -54,3 +54,20 @@ Thumbs.db
 *.egg
 *.whl
 
+#Other
+
+APPENDIX_GENERATOR_GUIDE.md
+code_appendix.md
+generate_code_appendix.py
+
+#diagrams
+diagrams/
+
+#tests
+tests/
+
+#docs
+docs/
+
+#data
+data/
