@@ -1,5 +1,6 @@
 """CRUD operations for Study and StudyQuestion models."""
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -36,6 +37,38 @@ def get_study_by_id(db: Session, study_id: int, load_questions: bool = True) -> 
     if load_questions:
         stmt = stmt.options(selectinload(Study.questions))
     return db.scalar(stmt)
+
+
+def verify_study_ownership(db: Session, study_id: int, user_id: int) -> Study:
+    """
+    Verify that a user owns a study and return the study.
+
+    Args:
+        db: Database session
+        study_id: ID of the study to verify
+        user_id: ID of the user claiming ownership
+
+    Returns:
+        Study instance if user is owner
+
+    Raises:
+        HTTPException: If study not found or user is not owner
+    """
+    study = get_study_by_id(db, study_id, load_questions=False)
+
+    if not study:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Study not found",
+        )
+
+    if study.owner_user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Study not found",
+        )
+
+    return study
 
 
 def get_studies_by_user(db: Session, user_id: int, skip: int = 0, limit: int = 100) -> list[Study]:

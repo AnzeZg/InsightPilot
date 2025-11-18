@@ -10,20 +10,14 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
-from app.constants import SAMPLE_QUOTES_LIMIT, TOP_KEYWORDS_LIMIT
 from app.crud import interview as interview_crud
 from app.crud import invite as invite_crud
 from app.crud import study as study_crud
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.interview import (
-    DemographicBreakdown,
     InterviewDetailResponse,
     InterviewListItem,
-    InterviewTimeline,
-    KeywordFrequency,
-    ResponseMetrics,
-    SentimentDistribution,
     StudyAnalytics,
 )
 from app.schemas.invite import InviteCreate, InviteResponse
@@ -41,19 +35,8 @@ router = APIRouter(prefix="/studies", tags=["studies"])
 
 
 def verify_study_owner(study_id: int, user: User, db: Session):
-    """Verify that the current user owns the study."""
-    study = study_crud.get_study_by_id(db, study_id, load_questions=False)
-    if not study:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Study not found",
-        )
-    if study.owner_user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Study not found",
-        )
-    return study
+    """Verify that the current user owns the study (wrapper for backward compatibility)."""
+    return study_crud.verify_study_ownership(db, study_id, user.id)
 
 
 @router.post("/", response_model=StudyResponse, status_code=status.HTTP_201_CREATED)

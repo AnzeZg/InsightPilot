@@ -18,19 +18,8 @@ router = APIRouter(prefix="/app", tags=["web"])
 
 
 def verify_study_owner(study_id: int, user: User, db: Session):
-    """Verify that the current user owns the study."""
-    study = study_crud.get_study_by_id(db, study_id, load_questions=False)
-    if not study:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Study not found",
-        )
-    if study.owner_user_id != user.id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Study not found",
-        )
-    return study
+    """Verify that the current user owns the study (wrapper for backward compatibility)."""
+    return study_crud.verify_study_ownership(db, study_id, user.id)
 
 
 @router.get("/studies", response_class=HTMLResponse)
