@@ -70,7 +70,7 @@ class StudyAnalyticsService:
 
     def _aggregate_keywords(self, interviews: list) -> list[KeywordFrequency]:
         """Aggregate and rank keywords across all interviews."""
-        keyword_freq = {}
+        keyword_freq: dict[str, int] = {}
 
         for interview in interviews:
             if interview.insight and interview.insight.keywords_json:
@@ -128,7 +128,7 @@ class StudyAnalyticsService:
 
     def _process_demographics(self, interviews: list) -> list[DemographicBreakdown]:
         """Process and aggregate demographic data."""
-        demographics_data = {}
+        demographics_data: dict[str, dict[str, int]] = {}
 
         for interview in interviews:
             if interview.interviewee and interview.interviewee.demographics_json:
@@ -148,7 +148,9 @@ class StudyAnalyticsService:
 
     def _build_timeline(self, interviews: list) -> list[InterviewTimeline]:
         """Build interview timeline data."""
-        timeline_data = defaultdict(lambda: {"completed": 0, "in_progress": 0})
+        timeline_data: dict[str, dict[str, int]] = defaultdict(
+            lambda: {"completed": 0, "in_progress": 0}
+        )
 
         for interview in interviews:
             date_key = interview.started_at.strftime("%Y-%m-%d")

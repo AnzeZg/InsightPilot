@@ -47,9 +47,11 @@ dependencies = [
 dev = [
     "pytest==8.3.4",
     "pytest-asyncio==0.24.0",
+    "pytest-cov==7.0.0",
     "black==24.10.0",
     "isort==5.13.2",
     "ruff==0.8.4",
+    "mypy==1.13.0",
     "pre-commit==4.0.1",
 ]
 
@@ -94,6 +96,22 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "vaderSentiment.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "yake.*"
+ignore_missing_imports = true
 
 [tool.setuptools.packages.find]
 where = ["."]
