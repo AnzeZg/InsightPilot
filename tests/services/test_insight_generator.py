@@ -16,9 +16,9 @@ from app.services.insight_generator import InsightGenerator
 @pytest.fixture
 def mock_openai_client():
     """Mock OpenAI client."""
-    with patch("app.services.insight_generator.OpenAI") as mock_openai:
+    with patch("app.services.openai_factory.create_openai_client") as mock_factory:
         mock_client = MagicMock()
-        mock_openai.return_value = mock_client
+        mock_factory.return_value = mock_client
 
         mock_response = MagicMock()
         mock_response.choices[

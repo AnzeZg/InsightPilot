@@ -30,6 +30,7 @@ from app.schemas.study import (
     StudyUpdate,
 )
 from app.services.analytics_service import StudyAnalyticsService
+from app.utils.formatters import format_datetime, format_json_field
 
 router = APIRouter(prefix="/studies", tags=["studies"])
 
@@ -329,18 +330,6 @@ def get_interview_transcript(
     )
 
 
-def _format_datetime(dt: datetime | None) -> str:
-    """Format datetime for export."""
-    if dt is None:
-        return ""
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
-
-
-def _format_json_field(data: dict | list | None) -> str:
-    """Format JSON field as string."""
-    if data is None:
-        return ""
-    return json.dumps(data)
 
 
 def _export_interview_to_dict(interview, study_title: str) -> dict:
@@ -358,15 +347,15 @@ def _export_interview_to_dict(interview, study_title: str) -> dict:
         "interview_id": interview.id,
         "interviewee_name": interviewee.name if interviewee else "",
         "interviewee_email": interviewee.email if interviewee else "",
-        "demographics": _format_json_field(interviewee.demographics_json if interviewee else None),
-        "started_at": _format_datetime(interview.started_at),
-        "completed_at": _format_datetime(interview.completed_at),
+        "demographics": format_json_field(interviewee.demographics_json if interviewee else None),
+        "started_at": format_datetime(interview.started_at),
+        "completed_at": format_datetime(interview.completed_at),
         "agent_turns": interview.agent_turns,
         "message_count": len(interview.messages),
         "summary": insight.summary if insight else "",
         "sentiment": insight.sentiment if insight else "",
-        "keywords": _format_json_field(insight.keywords_json if insight else None),
-        "quotes": _format_json_field(insight.quotes_json if insight else None),
+        "keywords": format_json_field(insight.keywords_json if insight else None),
+        "quotes": format_json_field(insight.quotes_json if insight else None),
         "conversation": conversation_text,
     }
 

@@ -4,13 +4,12 @@ import json
 import logging
 from typing import Any
 
-from openai import OpenAI
 from sqlalchemy.orm import Session
 
 from app.constants import DEFAULT_AI_MODEL, INSIGHT_GENERATION_TEMPERATURE
 from app.crud import interview as interview_crud
 from app.models.interview import Message
-from app.services.ai_agent import get_openai_api_key
+from app.services.openai_factory import create_openai_client
 
 logger = logging.getLogger(__name__)
 
@@ -20,8 +19,7 @@ class InsightGenerator:
 
     def __init__(self):
         """Initialize the insight generator with OpenAI client."""
-        api_key = get_openai_api_key()
-        self.client = OpenAI(api_key=api_key)
+        self.client = create_openai_client()
 
     def generate_insights(self, db: Session, interview_id: int) -> dict[str, Any]:
         """

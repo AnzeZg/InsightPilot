@@ -1,9 +1,5 @@
 """AI Agent service for conducting research interviews."""
 
-import os
-
-from openai import OpenAI
-
 from app.constants import (
     AI_FREQUENCY_PENALTY,
     AI_INITIAL_MAX_TOKENS,
@@ -12,20 +8,7 @@ from app.constants import (
     AI_TEMPERATURE,
     DEFAULT_AI_MODEL,
 )
-
-
-def get_openai_api_key() -> str | None:
-    """Get OpenAI API key from environment or settings."""
-    key = os.getenv("OPENAI_API_KEY")
-    if key:
-        return key
-
-    try:
-        from app.settings import settings
-
-        return settings.openai_api_key
-    except Exception:
-        return None
+from app.services.openai_factory import create_openai_client
 
 
 class AIInterviewAgent:
@@ -38,13 +21,7 @@ class AIInterviewAgent:
         Args:
             api_key: OpenAI API key (defaults to OPENAI_API_KEY env var or settings)
         """
-        self.api_key = api_key or get_openai_api_key()
-        if not self.api_key:
-            raise ValueError(
-                "OpenAI API key required. Set OPENAI_API_KEY environment variable "
-                "in your .env file or pass api_key parameter."
-            )
-        self.client = OpenAI(api_key=self.api_key)
+        self.client = create_openai_client(api_key)
         self.model = DEFAULT_AI_MODEL
 
     def generate_system_prompt(
