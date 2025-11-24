@@ -87,8 +87,8 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
             study_title: Title of the research study
             study_description: Description of the study
             study_questions: List of research questions
-            conversation_history: List of previous messages
-                [{"role": "user"|"assistant", "content": "..."}]
+            conversation_history: List of previous messages with
+                format [{"role": "user"|"assistant", "content": "..."}]
             current_turn: Current turn number (0-indexed)
             max_turns: Maximum number of agent turns allowed
 
@@ -141,20 +141,18 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
         Returns:
             Opening message string
         """
-        system_prompt = f"""You are an AI research interviewer starting an interview \
-for a study titled: "{study_title}"
-
-Study context: {study_description}
-
-The participant's name is {interviewee_name}.
-
-Generate a warm, welcoming opening message that:
-1. Thanks them for participating
-2. Briefly mentions what the study is about
-3. Asks your first research question related to the study topics
-4. Keep it concise (3-4 sentences total)
-
-Be friendly and professional."""
+        system_prompt = (
+            f'You are an AI research interviewer starting an interview '
+            f'for a study titled: "{study_title}"\n\n'
+            f'Study context: {study_description}\n\n'
+            f"The participant's name is {interviewee_name}.\n\n"
+            "Generate a warm, welcoming opening message that:\n"
+            "1. Thanks them for participating\n"
+            "2. Briefly mentions what the study is about\n"
+            "3. Asks your first research question\n"
+            "4. Keep it concise (3-4 sentences total)\n\n"
+            "Be friendly and professional."
+        )
 
         try:
             response = self.client.chat.completions.create(
@@ -168,9 +166,10 @@ Be friendly and professional."""
 
         except Exception:
             return (
-                f"Hello {interviewee_name}! Thank you for participating in this research "
-                f"study about {study_title}. I'm excited to hear your thoughts. To begin, "
-                f"could you share your initial perspective on this topic?"
+                f"Hello {interviewee_name}! Thank you for participating in "
+                f"this research study about {study_title}. I'm excited to "
+                f"hear your thoughts. To begin, could you share your "
+                f"initial perspective on this topic?"
             )
 
     def _get_error_fallback(self, error_message: str) -> str:
