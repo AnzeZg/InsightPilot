@@ -111,33 +111,55 @@ def sample_interview(db: Session):
 
 
 @pytest.mark.asyncio
-async def test_generate_insights_success(db: Session, sample_interview, mock_openai_client):
+async def test_generate_insights_success(db: Session, sample_interview):
     """Test successful insight generation."""
-    generator = InsightGenerator()
+    with patch("app.services.insight_generator.create_openai_client") as mock_factory:
+        mock_client = MagicMock()
+        mock_factory.return_value = mock_client
 
-    insights = generator.generate_insights(db, sample_interview.id)
+        mock_response = MagicMock()
+        mock_response.choices[0].message.content = """{
+            "summary": "The participant discussed their experience with the product interface.",
+            "sentiment": "positive",
+            "keywords": ["user interface", "design", "experience"],
+            "themes": ["product usability", "customer satisfaction"],
+            "notable_quotes": [
+                "I really love the new design.",
+                "The interface is very intuitive.",
+                "Best product I've used in years."
+            ],
+            "engagement_level": "high",
+            "key_insights": [
+                "User highly values intuitive design",
+                "Positive sentiment toward new features"
+            ]
+        }"""
+        mock_client.chat.completions.create.return_value = mock_response
 
-    assert insights["summary"] is not None
-    assert insights["sentiment"] in ["positive", "neutral", "negative"]
-    assert isinstance(insights["keywords"], list)
-    assert isinstance(insights["themes"], list)
-    assert isinstance(insights["notable_quotes"], list)
-    assert insights["engagement_level"] in ["high", "medium", "low"]
-    assert isinstance(insights["key_insights"], list)
+        generator = InsightGenerator()
+        insights = generator.generate_insights(db, sample_interview.id)
 
-    mock_openai_client.chat.completions.create.assert_called_once()
-    call_args = mock_openai_client.chat.completions.create.call_args
-    assert call_args.kwargs["model"] == "gpt-4o-mini"
-    assert call_args.kwargs["temperature"] == 0.3
-    assert call_args.kwargs["response_format"] == {"type": "json_object"}
+        assert insights["summary"] is not None
+        assert insights["sentiment"] in ["positive", "neutral", "negative"]
+        assert isinstance(insights["keywords"], list)
+        assert isinstance(insights["themes"], list)
+        assert isinstance(insights["notable_quotes"], list)
+        assert insights["engagement_level"] in ["high", "medium", "low"]
+        assert isinstance(insights["key_insights"], list)
+
+        mock_client.chat.completions.create.assert_called_once()
+        call_args = mock_client.chat.completions.create.call_args
+        assert call_args.kwargs["model"] == "gpt-4o-mini"
+        assert call_args.kwargs["temperature"] == 0.3
+        assert call_args.kwargs["response_format"] == {"type": "json_object"}
 
 
 @pytest.mark.asyncio
 async def test_generate_insights_validates_output(db: Session, sample_interview):
     """Test that insights are validated and normalized."""
-    with patch("app.services.insight_generator.OpenAI") as mock_openai:
+    with patch("app.services.openai_factory.create_openai_client") as mock_factory:
         mock_client = MagicMock()
-        mock_openai.return_value = mock_client
+        mock_factory.return_value = mock_client
 
         mock_response = MagicMock()
         mock_response.choices[
@@ -191,9 +213,9 @@ async def test_generate_insights_empty_interview(db: Session):
 @pytest.mark.asyncio
 async def test_generate_insights_api_failure_fallback(db: Session, sample_interview):
     """Test fallback extraction when API fails."""
-    with patch("app.services.insight_generator.OpenAI") as mock_openai:
+    with patch("app.services.openai_factory.create_openai_client") as mock_factory:
         mock_client = MagicMock()
-        mock_openai.return_value = mock_client
+        mock_factory.return_value = mock_client
 
         mock_client.chat.completions.create.side_effect = Exception("API Error")
 
@@ -208,9 +230,9 @@ async def test_generate_insights_api_failure_fallback(db: Session, sample_interv
 @pytest.mark.asyncio
 async def test_generate_insights_invalid_json_fallback(db: Session, sample_interview):
     """Test fallback when LLM returns invalid JSON."""
-    with patch("app.services.insight_generator.OpenAI") as mock_openai:
+    with patch("app.services.openai_factory.create_openai_client") as mock_factory:
         mock_client = MagicMock()
-        mock_openai.return_value = mock_client
+        mock_factory.return_value = mock_client
 
         mock_response = MagicMock()
         mock_response.choices[0].message.content = "This is not valid JSON"
