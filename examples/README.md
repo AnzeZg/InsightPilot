@@ -54,4 +54,3 @@ Max Turns: 5
 👤 You: I really like the fingerprint login feature
 🤖 AI: Thank you for sharing that. Can you tell me more...
 ```
-

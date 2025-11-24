@@ -117,4 +117,3 @@ ignore_missing_imports = true
 where = ["."]
 include = ["app*"]
 exclude = ["alembic*", "tests*", "venv*"]
-

@@ -209,26 +209,26 @@ async function loadAnalytics() {
 
     try {
         const response = await fetch('/studies/{{ study.id }}/analytics');
-        
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         // Hide loading
         loading.classList.add('hidden');
-        
+
         // Check if empty
         if (data.total_interviews === 0) {
             empty.classList.remove('hidden');
             return;
         }
-        
+
         // Show content and render
         content.classList.remove('hidden');
         renderAnalytics(data);
-        
+
     } catch (err) {
         console.error('Failed to load analytics:', err);
         loading.classList.add('hidden');
@@ -243,35 +243,35 @@ function renderAnalytics(data) {
     document.getElementById('stat-completed').textContent = data.completed_interviews;
     document.getElementById('stat-messages').textContent = data.response_metrics.total_messages;
     document.getElementById('stat-avg-messages').textContent = data.response_metrics.avg_message_count.toFixed(1);
-    
+
     // Update response metrics
     document.getElementById('metric-response-length').textContent = data.response_metrics.avg_response_length.toFixed(0);
     document.getElementById('metric-conversation-length').textContent = data.response_metrics.avg_conversation_length.toFixed(0);
     document.getElementById('metric-messages-per-interview').textContent = data.response_metrics.avg_message_count.toFixed(1);
-    
+
     // Render Sentiment Chart
     renderSentimentChart(data.sentiment_distribution);
-    
+
     // Render Timeline Chart
     renderTimelineChart(data.timeline);
-    
+
     // Render Keywords Chart
     renderKeywordsChart(data.top_keywords);
-    
+
     // Render Demographics
     renderDemographics(data.demographics);
-    
+
     // Render Quotes
     renderQuotes(data.sample_quotes);
 }
 
 function renderSentimentChart(sentiment) {
     const ctx = document.getElementById('sentimentChart');
-    
+
     if (charts.sentiment) {
         charts.sentiment.destroy();
     }
-    
+
     charts.sentiment = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -299,16 +299,16 @@ function renderSentimentChart(sentiment) {
 
 function renderTimelineChart(timeline) {
     const ctx = document.getElementById('timelineChart');
-    
+
     if (charts.timeline) {
         charts.timeline.destroy();
     }
-    
+
     if (timeline.length === 0) {
         ctx.parentElement.innerHTML = '<p class="text-gray-500 text-center py-8">No timeline data available</p>';
         return;
     }
-    
+
     charts.timeline = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -352,19 +352,19 @@ function renderTimelineChart(timeline) {
 
 function renderKeywordsChart(keywords) {
     const ctx = document.getElementById('keywordsChart');
-    
+
     if (charts.keywords) {
         charts.keywords.destroy();
     }
-    
+
     if (keywords.length === 0) {
         ctx.parentElement.innerHTML = '<p class="text-gray-500 text-center py-8">No keywords available</p>';
         return;
     }
-    
+
     // Take top 10 for visibility
     const topKeywords = keywords.slice(0, 10);
-    
+
     charts.keywords = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -398,19 +398,19 @@ function renderKeywordsChart(keywords) {
 
 function renderDemographics(demographics) {
     const container = document.getElementById('demographics-content');
-    
+
     if (demographics.length === 0) {
         container.innerHTML = '<p class="text-gray-500 text-center py-8">No demographic data available</p>';
         return;
     }
-    
+
     let html = '<div class="space-y-4">';
-    
+
     demographics.forEach(demo => {
         html += `<div>
             <h4 class="text-sm font-medium text-gray-700 mb-2 capitalize">${demo.field.replace('_', ' ')}</h4>
             <div class="space-y-1">`;
-        
+
         const sorted = Object.entries(demo.values).sort((a, b) => b[1] - a[1]);
         sorted.forEach(([value, count]) => {
             const percentage = (count / sorted.reduce((sum, [, c]) => sum + c, 0) * 100).toFixed(0);
@@ -425,22 +425,22 @@ function renderDemographics(demographics) {
                     </div>
                 </div>`;
         });
-        
+
         html += `</div></div>`;
     });
-    
+
     html += '</div>';
     container.innerHTML = html;
 }
 
 function renderQuotes(quotes) {
     const container = document.getElementById('quotes-content');
-    
+
     if (quotes.length === 0) {
         container.innerHTML = '<p class="text-gray-500 text-center py-8">No quotes available</p>';
         return;
     }
-    
+
     let html = '';
     quotes.forEach(quote => {
         html += `
@@ -448,7 +448,7 @@ function renderQuotes(quotes) {
                 <p class="text-gray-700 italic">"${quote}"</p>
             </div>`;
     });
-    
+
     container.innerHTML = html;
 }
 
@@ -469,4 +469,3 @@ if (typeof Chart === 'undefined') {
 }
 </script>
 {% endblock %}
-

@@ -392,13 +392,22 @@ async def test_get_analytics_response_metrics(
 
         # Add messages with known lengths
         interview_crud.create_message(
-            db, interview_id=interview.id, role="assistant", content="Hello there!"  # 12 chars
+            db,
+            interview_id=interview.id,
+            role="assistant",
+            content="Hello there!",  # 12 chars
         )
         interview_crud.create_message(
-            db, interview_id=interview.id, role="user", content="Hi!"  # 3 chars
+            db,
+            interview_id=interview.id,
+            role="user",
+            content="Hi!",  # 3 chars
         )
         interview_crud.create_message(
-            db, interview_id=interview.id, role="user", content="How are you?"  # 12 chars
+            db,
+            interview_id=interview.id,
+            role="user",
+            content="How are you?",  # 12 chars
         )
 
         interview_crud.complete_interview(db, interview.id)

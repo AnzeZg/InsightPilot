@@ -5,7 +5,7 @@ Terminal-based test for the AI Interview Agent. (Created using AI for quick test
 Usage:
     # Requires OPENAI_API_KEY environment variable
     python examples/test_ai_agent.py
-    
+
     # Custom number of turns
     python examples/test_ai_agent.py --turns 10
 """
@@ -20,9 +20,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 # Load environment variables from .env file
 from dotenv import load_dotenv
 
-load_dotenv()
-
 from app.services.ai_agent import AIInterviewAgent
+
+load_dotenv()
 
 
 def simulate_interview(max_turns: int = 5):
@@ -30,7 +30,10 @@ def simulate_interview(max_turns: int = 5):
 
     # Sample study data
     study_title = "User Experience with Mobile Banking Apps"
-    study_description = "Understanding how people interact with mobile banking applications and what features they value most."
+    study_description = (
+        "Understanding how people interact with mobile banking applications "
+        "and what features they value most."
+    )
     study_questions = [
         "What are the most important features in a mobile banking app?",
         "What frustrations do users experience with current banking apps?",
@@ -85,10 +88,7 @@ def simulate_interview(max_turns: int = 5):
             continue
 
         # Add user message to history
-        conversation_history.append({
-            "role": "user",
-            "content": user_message
-        })
+        conversation_history.append({"role": "user", "content": user_message})
 
         # Get AI response
         print("\n🤖 AI Agent: Thinking...\n")
@@ -105,10 +105,7 @@ def simulate_interview(max_turns: int = 5):
         print(f"🤖 AI: {ai_response}\n")
 
         # Add AI response to history
-        conversation_history.append({
-            "role": "assistant",
-            "content": ai_response
-        })
+        conversation_history.append({"role": "assistant", "content": ai_response})
 
     # Interview complete
     print("\n" + "=" * 60)
@@ -122,8 +119,8 @@ def simulate_interview(max_turns: int = 5):
     print("\n📝 Conversation Summary:")
     print("-" * 60)
     for i, msg in enumerate(conversation_history, 1):
-        speaker = "👤 You" if msg['role'] == 'user' else "🤖 AI"
-        content = msg['content'][:100] + "..." if len(msg['content']) > 100 else msg['content']
+        speaker = "👤 You" if msg["role"] == "user" else "🤖 AI"
+        content = msg["content"][:100] + "..." if len(msg["content"]) > 100 else msg["content"]
         print(f"{i}. {speaker}: {content}")
 
 
@@ -137,6 +134,7 @@ def test_system_prompt():
         print("Creating dummy agent for demonstration...\n")
         # For testing prompt generation, we can skip the actual API client
         import os
+
         os.environ.setdefault("OPENAI_API_KEY", "dummy-key-for-prompt-test")
         agent = AIInterviewAgent()
 
@@ -156,16 +154,9 @@ def test_system_prompt():
 
 def main():
     parser = argparse.ArgumentParser(description="Test the AI Interview Agent")
+    parser.add_argument("--turns", type=int, default=5, help="Maximum number of turns (default: 5)")
     parser.add_argument(
-        "--turns",
-        type=int,
-        default=5,
-        help="Maximum number of turns (default: 5)"
-    )
-    parser.add_argument(
-        "--test-prompt",
-        action="store_true",
-        help="Just test system prompt generation and exit"
+        "--test-prompt", action="store_true", help="Just test system prompt generation and exit"
     )
 
     args = parser.parse_args()
@@ -178,4 +169,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

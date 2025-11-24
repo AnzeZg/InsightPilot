@@ -21,9 +21,7 @@ def mock_openai_client():
         mock_factory.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.choices[
-            0
-        ].message.content = """{
+        mock_response.choices[0].message.content = """{
             "summary": "The participant discussed their experience with the product interface.",
             "sentiment": "positive",
             "keywords": ["user interface", "design", "experience"],
@@ -118,9 +116,7 @@ async def test_generate_insights_success(db: Session, sample_interview):
         mock_factory.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.choices[
-            0
-        ].message.content = """{
+        mock_response.choices[0].message.content = """{
             "summary": "The participant discussed their experience with the product interface.",
             "sentiment": "positive",
             "keywords": ["user interface", "design", "experience"],
@@ -164,9 +160,7 @@ async def test_generate_insights_validates_output(db: Session, sample_interview)
         mock_factory.return_value = mock_client
 
         mock_response = MagicMock()
-        mock_response.choices[
-            0
-        ].message.content = """{
+        mock_response.choices[0].message.content = """{
             "summary": "Test summary",
             "sentiment": "INVALID_SENTIMENT",
             "keywords": ["test"],

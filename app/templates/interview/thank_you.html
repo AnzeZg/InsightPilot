@@ -10,9 +10,9 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
     </div>
-    
+
     <h2 class="text-3xl font-bold text-gray-900 mb-4">Thank You for Your Participation!</h2>
-    
+
     <p class="text-lg text-gray-700 mb-6">
         {% if interviewee %}
         Thank you, <strong>{{ interviewee.name }}</strong>, for completing this interview.
@@ -20,11 +20,11 @@
         Thank you for completing this interview.
         {% endif %}
     </p>
-    
+
     <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-6 mb-6">
         <p class="text-gray-800 leading-relaxed">
-            Your insights and responses are incredibly valuable for our research on 
-            <strong>{{ study.title }}</strong>. The information you've shared will help us 
+            Your insights and responses are incredibly valuable for our research on
+            <strong>{{ study.title }}</strong>. The information you've shared will help us
             better understand this topic and contribute to meaningful findings.
         </p>
     </div>
@@ -61,10 +61,10 @@
     <!-- Appreciation Message -->
     <div class="border-t border-gray-200 pt-6">
         <p class="text-sm text-gray-600 mb-4">
-            We truly appreciate the time and thought you put into your responses. 
+            We truly appreciate the time and thought you put into your responses.
             Your participation makes a real difference in our research efforts.
         </p>
-        
+
         <div class="flex items-center justify-center space-x-2 text-indigo-600">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"></path>
@@ -75,8 +75,8 @@
 
     <!-- Optional: Close Window Button -->
     <div class="mt-8">
-        <button 
-            onclick="window.close()" 
+        <button
+            onclick="window.close()"
             class="text-sm text-gray-500 hover:text-gray-700 underline"
         >
             You may close this window
@@ -84,4 +84,3 @@
     </div>
 </div>
 {% endblock %}
-

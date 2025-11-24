@@ -1,15 +1,17 @@
 """initial schema
 
 Revision ID: 001
-Revises: 
+Revises:
 Create Date: 2025-10-06
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "001"
@@ -20,7 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Create all tables."""
-    
+
     # Create users table
     op.create_table(
         "users",
@@ -74,7 +76,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_study_questions_id"), "study_questions", ["id"], unique=False)
-    op.create_index(op.f("ix_study_questions_study_id"), "study_questions", ["study_id"], unique=False)
+    op.create_index(
+        op.f("ix_study_questions_study_id"), "study_questions", ["study_id"], unique=False
+    )
 
     # Create invites table
     op.create_table(
@@ -161,35 +165,34 @@ def downgrade() -> None:
     """Drop all tables."""
     op.drop_index(op.f("ix_insights_id"), table_name="insights")
     op.drop_table("insights")
-    
+
     op.drop_index(op.f("ix_messages_interview_id"), table_name="messages")
     op.drop_index(op.f("ix_messages_id"), table_name="messages")
     op.drop_table("messages")
-    
+
     op.drop_index(op.f("ix_interviewees_id"), table_name="interviewees")
     op.drop_table("interviewees")
-    
+
     op.drop_index(op.f("ix_interviews_study_id"), table_name="interviews")
     op.drop_index(op.f("ix_interviews_id"), table_name="interviews")
     op.drop_table("interviews")
-    
+
     op.drop_index(op.f("ix_invites_invite_code"), table_name="invites")
     op.drop_index(op.f("ix_invites_study_id"), table_name="invites")
     op.drop_index(op.f("ix_invites_id"), table_name="invites")
     op.drop_table("invites")
-    
+
     op.drop_index(op.f("ix_study_questions_study_id"), table_name="study_questions")
     op.drop_index(op.f("ix_study_questions_id"), table_name="study_questions")
     op.drop_table("study_questions")
-    
+
     op.drop_index(op.f("ix_studies_owner_user_id"), table_name="studies")
     op.drop_index(op.f("ix_studies_id"), table_name="studies")
     op.drop_table("studies")
-    
+
     op.drop_index(op.f("ix_sessions_user_id"), table_name="sessions")
     op.drop_table("sessions")
-    
+
     op.drop_index(op.f("ix_users_email"), table_name="users")
     op.drop_index(op.f("ix_users_id"), table_name="users")
     op.drop_table("users")
-

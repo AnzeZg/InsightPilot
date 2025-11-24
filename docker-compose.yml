@@ -53,4 +53,3 @@ networks:
   insightpilot_network:
     name: insightpilot_network
     driver: bridge
-

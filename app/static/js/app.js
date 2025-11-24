@@ -19,4 +19,3 @@ function copyToClipboard(text) {
 
 // Make it available globally
 window.copyToClipboard = copyToClipboard;
-

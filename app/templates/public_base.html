@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}InsightPilot{% endblock %}</title>
-    
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- HTMX for progressive enhancement -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-    
+
     <!-- Custom styles -->
     <link rel="stylesheet" href="{{ url_for('static', path='css/app.css') }}" />
-    
+
     {% block extra_head %}{% endblock %}
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
@@ -46,4 +46,3 @@
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
-

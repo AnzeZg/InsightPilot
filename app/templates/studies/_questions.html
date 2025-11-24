@@ -13,8 +13,8 @@
                 <p class="text-xs text-gray-500 mt-1">Order: {{ question.sort_order }}</p>
             </div>
         </div>
-        <button hx-delete="/app/studies/{{ question.study_id }}/questions/{{ question.id }}" 
-                hx-target="#questions-container" 
+        <button hx-delete="/app/studies/{{ question.study_id }}/questions/{{ question.id }}"
+                hx-target="#questions-container"
                 hx-swap="innerHTML"
                 hx-confirm="Delete this question?"
                 class="ml-4 text-red-600 hover:text-red-800">
@@ -35,7 +35,7 @@
 
     list.querySelectorAll('.reorder-handle').forEach(handle => {
         const li = handle.closest('li');
-        
+
         handle.addEventListener('mousedown', (e) => {
             li.draggable = true;
         });
@@ -48,7 +48,7 @@
         li.addEventListener('dragend', (e) => {
             li.style.opacity = '1';
             li.draggable = false;
-            
+
             // Gather new order
             const items = Array.from(list.querySelectorAll('li'));
             const questionOrder = items.map((item, index) => ({
@@ -86,11 +86,11 @@
 
     function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('li:not(.opacity-50)')];
-        
+
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
             const offset = y - box.top - box.height / 2;
-            
+
             if (offset < 0 && offset > closest.offset) {
                 return { offset: offset, element: child };
             } else {
@@ -108,4 +108,3 @@
     <p class="mt-2 text-sm text-gray-500">No questions yet. Add your first seed question to guide the interview.</p>
 </div>
 {% endif %}
-

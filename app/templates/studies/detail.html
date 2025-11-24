@@ -18,11 +18,11 @@
                 <p class="mt-2 text-gray-600">{{ study.description }}</p>
             </div>
             <div class="ml-4 flex space-x-3">
-                <button onclick="document.getElementById('edit-modal').classList.remove('hidden')" 
+                <button onclick="document.getElementById('edit-modal').classList.remove('hidden')"
                         class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     Edit
                 </button>
-                <button onclick="if(confirm('Delete this study?')) document.getElementById('delete-form').submit()" 
+                <button onclick="if(confirm('Delete this study?')) document.getElementById('delete-form').submit()"
                         class="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50">
                     Delete
                 </button>
@@ -63,7 +63,7 @@
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Seed Questions</h3>
                 <p class="mt-1 max-w-2xl text-sm text-gray-500">Questions that guide the interview</p>
             </div>
-            <button onclick="document.getElementById('question-modal').classList.remove('hidden')" 
+            <button onclick="document.getElementById('question-modal').classList.remove('hidden')"
                     class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                 <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -84,14 +84,14 @@
                 <p class="mt-1 max-w-2xl text-sm text-gray-500">View completed and in-progress interviews</p>
             </div>
             <div class="flex space-x-3">
-                <a href="/app/studies/{{ study.id }}/analytics" 
+                <a href="/app/studies/{{ study.id }}/analytics"
                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                     </svg>
                     Analytics
                 </a>
-                <a href="/app/studies/{{ study.id }}/interviews" 
+                <a href="/app/studies/{{ study.id }}/interviews"
                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                     <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
@@ -109,8 +109,8 @@
                 <h3 class="text-lg leading-6 font-medium text-gray-900">Invites</h3>
                 <p class="mt-1 max-w-2xl text-sm text-gray-500">Generate invite links for participants</p>
             </div>
-            <button hx-post="/app/studies/{{ study.id }}/invites" 
-                    hx-target="#invites-container" 
+            <button hx-post="/app/studies/{{ study.id }}/invites"
+                    hx-target="#invites-container"
                     hx-swap="innerHTML"
                     class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                 <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,25 +131,25 @@
         <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onclick="document.getElementById('question-modal').classList.add('hidden')"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
         <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-            <form hx-post="/app/studies/{{ study.id }}/questions" 
-                  hx-target="#questions-container" 
+            <form hx-post="/app/studies/{{ study.id }}/questions"
+                  hx-target="#questions-container"
                   hx-swap="innerHTML"
                   hx-on::after-request="document.getElementById('question-modal').classList.add('hidden'); document.getElementById('question-text').value='';">
                 <div>
                     <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Add Seed Question</h3>
                     <div>
                         <label for="question-text" class="block text-sm font-medium text-gray-700">Question Text</label>
-                        <textarea name="text" id="question-text" rows="3" required 
+                        <textarea name="text" id="question-text" rows="3" required
                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                                   placeholder="e.g., What features would you like to see in our product?"></textarea>
                     </div>
                 </div>
                 <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                    <button type="submit" 
+                    <button type="submit"
                             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
                         Add Question
                     </button>
-                    <button type="button" onclick="document.getElementById('question-modal').classList.add('hidden')" 
+                    <button type="button" onclick="document.getElementById('question-modal').classList.add('hidden')"
                             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
                         Cancel
                     </button>
@@ -172,32 +172,32 @@
                     <div class="space-y-4">
                         <div>
                             <label for="edit-title" class="block text-sm font-medium text-gray-700">Title</label>
-                            <input type="text" name="title" id="edit-title" value="{{ study.title }}" required 
+                            <input type="text" name="title" id="edit-title" value="{{ study.title }}" required
                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         </div>
                         <div>
                             <label for="edit-description" class="block text-sm font-medium text-gray-700">Description</label>
-                            <textarea name="description" id="edit-description" rows="3" required 
+                            <textarea name="description" id="edit-description" rows="3" required
                                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ study.description }}</textarea>
                         </div>
                         <div>
                             <label for="edit-consent_text" class="block text-sm font-medium text-gray-700">Consent Text</label>
-                            <textarea name="consent_text" id="edit-consent_text" rows="3" required 
+                            <textarea name="consent_text" id="edit-consent_text" rows="3" required
                                       class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">{{ study.consent_text }}</textarea>
                         </div>
                         <div>
                             <label for="edit-max_agent_turns" class="block text-sm font-medium text-gray-700">Max Agent Turns</label>
-                            <input type="number" name="max_agent_turns" id="edit-max_agent_turns" value="{{ study.max_agent_turns }}" min="1" max="50" required 
+                            <input type="number" name="max_agent_turns" id="edit-max_agent_turns" value="{{ study.max_agent_turns }}" min="1" max="50" required
                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
                         </div>
                     </div>
                 </div>
                 <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                    <button type="submit" 
+                    <button type="submit"
                             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm">
                         Save Changes
                     </button>
-                    <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')" 
+                    <button type="button" onclick="document.getElementById('edit-modal').classList.add('hidden')"
                             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
                         Cancel
                     </button>
@@ -207,4 +207,3 @@
     </div>
 </div>
 {% endblock %}
-
