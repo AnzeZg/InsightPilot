@@ -33,4 +33,3 @@ def format_json_field(data: dict | list | None) -> str:
     if data is None:
         return ""
     return json.dumps(data, indent=2)
-

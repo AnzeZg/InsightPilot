@@ -28,4 +28,3 @@ DEV_TEST_USER_EMAIL = "test@example.com"
 # Agent Interview
 MAX_INTERVIEW_TURNS = 10
 MAX_MESSAGE_LENGTH = 2000
-

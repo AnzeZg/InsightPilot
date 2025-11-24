@@ -34,9 +34,7 @@ class StudyAnalyticsService:
         Returns:
             StudyAnalytics with all aggregated metrics
         """
-        interviews = interview_crud.get_interviews_by_study(
-            self.db, study_id, load_relations=True
-        )
+        interviews = interview_crud.get_interviews_by_study(self.db, study_id, load_relations=True)
 
         return StudyAnalytics(
             study_id=study.id,
@@ -115,9 +113,7 @@ class StudyAnalyticsService:
         avg_response_length = (
             total_response_length / user_message_count if user_message_count > 0 else 0
         )
-        avg_conversation_length = (
-            total_response_length / completed if completed > 0 else 0
-        )
+        avg_conversation_length = total_response_length / completed if completed > 0 else 0
 
         return ResponseMetrics(
             avg_message_count=round(avg_message_count, 2),
@@ -137,9 +133,7 @@ class StudyAnalyticsService:
                         if field not in demographics_data:
                             demographics_data[field] = {}
                         key = str(value)
-                        demographics_data[field][key] = (
-                            demographics_data[field].get(key, 0) + 1
-                        )
+                        demographics_data[field][key] = demographics_data[field].get(key, 0) + 1
 
         return [
             DemographicBreakdown(field=field, values=values)
@@ -177,4 +171,3 @@ class StudyAnalyticsService:
                 break
 
         return sample_quotes[:SAMPLE_QUOTES_LIMIT]
-

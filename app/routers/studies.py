@@ -330,8 +330,6 @@ def get_interview_transcript(
     )
 
 
-
-
 def _export_interview_to_dict(interview, study_title: str) -> dict:
     """Convert interview to dictionary for export."""
     interviewee = interview.interviewee

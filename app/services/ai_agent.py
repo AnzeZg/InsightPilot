@@ -142,9 +142,9 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
             Opening message string
         """
         system_prompt = (
-            f'You are an AI research interviewer starting an interview '
+            f"You are an AI research interviewer starting an interview "
             f'for a study titled: "{study_title}"\n\n'
-            f'Study context: {study_description}\n\n'
+            f"Study context: {study_description}\n\n"
             f"The participant's name is {interviewee_name}.\n\n"
             "Generate a warm, welcoming opening message that:\n"
             "1. Thanks them for participating\n"

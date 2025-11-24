@@ -77,4 +77,3 @@ def test_verify_study_ownership_returns_study_without_questions(db_session, test
     # We check that accessing questions would trigger another query
     assert result.id == test_study.id
     assert result.owner_user_id == test_user.id
-

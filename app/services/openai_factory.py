@@ -46,4 +46,3 @@ def create_openai_client(api_key: str | None = None) -> OpenAI:
         )
 
     return OpenAI(api_key=key)
-

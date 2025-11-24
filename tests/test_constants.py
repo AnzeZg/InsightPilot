@@ -73,4 +73,3 @@ def test_constants_relationships():
     assert AI_INITIAL_MAX_TOKENS < AI_MAX_TOKENS
     # Sample quotes limit should be reasonable compared to keywords
     assert SAMPLE_QUOTES_LIMIT <= TOP_KEYWORDS_LIMIT
-
