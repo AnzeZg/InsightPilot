@@ -101,7 +101,10 @@ def sample_interview(db: Session):
         db,
         interview_id=interview.id,
         role="user",
-        content="The navigation is smooth and the features are exactly what I needed. Best product I've used in years.",
+        content=(
+            "The navigation is smooth and the features are exactly what I needed. "
+            "Best product I've used in years."
+        ),
     )
 
     return interview

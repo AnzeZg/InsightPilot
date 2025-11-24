@@ -87,7 +87,8 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
             study_title: Title of the research study
             study_description: Description of the study
             study_questions: List of research questions
-            conversation_history: List of previous messages [{"role": "user"|"assistant", "content": "..."}]
+            conversation_history: List of previous messages
+                [{"role": "user"|"assistant", "content": "..."}]
             current_turn: Current turn number (0-indexed)
             max_turns: Maximum number of agent turns allowed
 
@@ -140,7 +141,8 @@ Remember: Your goal is to gather authentic, detailed insights related to the res
         Returns:
             Opening message string
         """
-        system_prompt = f"""You are an AI research interviewer starting an interview for a study titled: "{study_title}"
+        system_prompt = f"""You are an AI research interviewer starting an interview \
+for a study titled: "{study_title}"
 
 Study context: {study_description}
 
@@ -165,7 +167,11 @@ Be friendly and professional."""
             return response.choices[0].message.content.strip()
 
         except Exception:
-            return f"Hello {interviewee_name}! Thank you for participating in this research study about {study_title}. I'm excited to hear your thoughts. To begin, could you share your initial perspective on this topic?"
+            return (
+                f"Hello {interviewee_name}! Thank you for participating in this research "
+                f"study about {study_title}. I'm excited to hear your thoughts. To begin, "
+                f"could you share your initial perspective on this topic?"
+            )
 
     def _get_error_fallback(self, error_message: str) -> str:
         """Provide a graceful fallback response when API fails."""

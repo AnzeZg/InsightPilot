@@ -1,7 +1,6 @@
 """Unit tests for study CRUD operations."""
 
 import pytest
-from fastapi import HTTPException
 
 from app.crud import study as study_crud
 from app.crud import user as user_crud

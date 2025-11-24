@@ -85,7 +85,11 @@ Focus on the participant's responses, not the interviewer's questions.
                 messages=[
                     {
                         "role": "system",
-                        "content": "You are an expert qualitative research analyst extracting insights from research interviews. Provide accurate, objective analysis in valid JSON format.",
+                        "content": (
+                            "You are an expert qualitative research analyst extracting insights "
+                            "from research interviews. Provide accurate, objective analysis in "
+                            "valid JSON format."
+                        ),
                     },
                     {"role": "user", "content": prompt},
                 ],
