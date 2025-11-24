@@ -41,6 +41,8 @@ dependencies = [
     "openai>=1.0.0",
     "vaderSentiment==3.3.2",
     "yake==0.4.8",
+    "prometheus-client==0.21.0",
+    "prometheus-fastapi-instrumentator==7.0.0",
 ]
 
 [project.optional-dependencies]
