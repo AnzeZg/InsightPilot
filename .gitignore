@@ -63,9 +63,6 @@ generate_code_appendix.py
 #diagrams
 diagrams/
 
-#tests
-tests/
-
 #docs
 docs/
 
