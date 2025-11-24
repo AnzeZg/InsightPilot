@@ -56,6 +56,9 @@ jobs:
           isort app/ tests/ --check
       
       - name: Run tests with coverage
+        env:
+          SECRET_KEY: test-secret-key-for-ci
+          DATABASE_URL: sqlite:///./test.db
         run: |
           pytest \
             --cov=app \
