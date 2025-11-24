@@ -15,11 +15,7 @@ from app.crud import invite as invite_crud
 from app.crud import study as study_crud
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.interview import (
-    InterviewDetailResponse,
-    InterviewListItem,
-    StudyAnalytics,
-)
+from app.schemas.interview import InterviewDetailResponse, InterviewListItem, StudyAnalytics
 from app.schemas.invite import InviteCreate, InviteResponse
 from app.schemas.study import (
     QuestionBatchReorder,
