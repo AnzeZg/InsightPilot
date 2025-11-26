@@ -7,8 +7,9 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from prometheus_fastapi_instrumentator import Instrumentator
 
-from app.middleware import RequestIDMiddleware
+from app.middleware import MetricsMiddleware, RequestIDMiddleware
 from app.routers import auth_dev, health, interview, studies, web, web_auth, web_studies
 from app.settings import settings
 from app.utils.logging import configure_logging
@@ -35,7 +36,22 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Add middleware (order matters - request ID first, then metrics)
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(MetricsMiddleware)
+
+# Initialize Prometheus instrumentation
+instrumentator = Instrumentator(
+    should_group_status_codes=False,
+    should_ignore_untemplated=True,
+    should_instrument_requests_inprogress=True,
+    excluded_handlers=["/metrics", "/healthz"],
+    inprogress_name="http_requests_inprogress",
+    inprogress_labels=True,
+)
+
+# Instrument the app and expose metrics endpoint
+instrumentator.instrument(app).expose(app, endpoint="/metrics", include_in_schema=False)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
