@@ -104,11 +104,11 @@ jobs:
   # JOB 2: BUILD & PUSH DOCKER IMAGE
   # ============================================================================
   build:
-    name: Build Docker Image
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
-    # Build on PRs to validate, build+push on main
-    if: success()
+    # Only build/push on pushes to main (skip for PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
@@ -121,7 +121,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Log in to Azure Container Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.ACR_LOGIN_SERVER }}
@@ -147,8 +146,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          # Only push on main branch, just build on PRs
-          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.ACR_LOGIN_SERVER }}/${{ env.DOCKER_IMAGE_NAME }}:buildcache
