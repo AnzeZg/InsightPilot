@@ -19,13 +19,13 @@ class Settings(BaseSettings):
     # Database
     database_url: str = Field(..., description="PostgreSQL connection URL (required)")
 
-    # LLM (to be used in later days)
+    # LLM
     openai_api_key: str | None = Field(default=None, description="OpenAI API key")
-    anthropic_api_key: str | None = Field(default=None, description="Anthropic API key")
 
-    # Email (optional, for later)
-    resend_api_key: str | None = Field(default=None, description="Resend email API key")
-    mailgun_api_key: str | None = Field(default=None, description="Mailgun API key")
+    # Azure Monitoring
+    appinsights_instrumentation_key: str | None = Field(
+        default=None, description="Azure Application Insights instrumentation key"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"

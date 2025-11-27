@@ -3,7 +3,24 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.db.session import get_db
 from app.main import app
+
+
+@pytest.fixture(autouse=True)
+def override_db_dependency(test_db):
+    """Override the default DB dependency with the in-memory test database."""
+
+    def override_get_db():
+        db = test_db()
+        try:
+            yield db
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db] = override_get_db
+    yield
+    app.dependency_overrides.pop(get_db, None)
 
 
 @pytest.mark.asyncio
