@@ -44,6 +44,7 @@ async def health_check(db: Session = Depends(get_db)):
     overall_status = "healthy" if db_healthy else "unhealthy"
 
     response = {
+        "ok": overall_status == "healthy",
         "status": overall_status,
         "service": "insightpilot",
         "version": "0.1.0",
