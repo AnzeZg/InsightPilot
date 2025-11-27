@@ -134,9 +134,14 @@ jobs:
         with:
           images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.DOCKER_IMAGE_NAME }}
           tags: |
-            type=sha,prefix={{branch}}-,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
+            # Always publish a deterministic build tag (build-<short-sha>)
+            type=sha,prefix=build-,format=short
+            # Tag with branch name when available (sanitized automatically)
             type=ref,event=branch
+            # Tag Git tags explicitly (useful for releases)
+            type=ref,event=tag
+            # Latest tag only on default branch
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
