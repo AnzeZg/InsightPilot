@@ -45,10 +45,10 @@ jobs:
           echo "Running Ruff linter..."
           ruff check app/ tests/ --output-format=github
 
-      - name: Check Black formatting
+      - name: Check Ruff formatting
         run: |
           echo "Checking code formatting..."
-          black app/ tests/ --check
+          ruff format app/ tests/ --check
 
       - name: Check import sorting
         run: |
