@@ -7,6 +7,8 @@ from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from opencensus.ext.azure import metrics_exporter
+from opencensus.ext.azure.log_exporter import AzureLogHandler
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from app.middleware import MetricsMiddleware, RequestIDMiddleware
@@ -64,6 +66,19 @@ app.include_router(web_studies.router)
 
 if settings.is_development:
     app.include_router(auth_dev.router)
+
+if settings.appinsights_instrumentation_key:
+    # Add logging handler
+    logger.addHandler(
+        AzureLogHandler(
+            connection_string=f"InstrumentationKey={settings.appinsights_instrumentation_key}"
+        )
+    )
+
+    # Add metrics exporter
+    exporter = metrics_exporter.new_metrics_exporter(
+        connection_string=f"InstrumentationKey={settings.appinsights_instrumentation_key}"
+    )
 
 templates = Jinja2Templates(directory="app/templates")
 

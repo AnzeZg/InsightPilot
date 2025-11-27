@@ -205,6 +205,11 @@ jobs:
                 "name": "ENVIRONMENT",
                 "value": "production"
               }
+              {
+                "name": "APPINSIGHTS_INSTRUMENTATION_KEY",
+                "value": "${{ secrets.APPINSIGHTS_INSTRUMENTATION_KEY }}",
+                "slotSetting": false
+              },
             ]
 
       - name: Deploy to Azure Web App

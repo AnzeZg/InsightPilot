@@ -43,6 +43,8 @@ dependencies = [
     "yake==0.4.8",
     "prometheus-client==0.21.0",
     "prometheus-fastapi-instrumentator==7.0.0",
+    "opencensus-ext-azure>=1.1.13",
+    "opencensus-ext-flask>=0.8.1",
 ]
 
 [project.optional-dependencies]
