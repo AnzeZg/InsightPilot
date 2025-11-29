@@ -59,7 +59,8 @@ Thumbs.db
 #Other
 
 APPENDIX_GENERATOR_GUIDE.md
-code_appendix.md
+code_appendix_v1.md
+code_appendix_v2.md
 generate_code_appendix.py
 
 #diagrams
