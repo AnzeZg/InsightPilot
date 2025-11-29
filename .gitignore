@@ -7,6 +7,8 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.mypy_cache/
+.ruff_cache/
 
 # Virtual environments
 venv/
@@ -62,9 +64,6 @@ generate_code_appendix.py
 
 #diagrams
 diagrams/
-
-#docs
-docs/
 
 #data
 data/

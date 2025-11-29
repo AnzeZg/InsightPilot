@@ -37,7 +37,7 @@ The platform combines conversational AI with automated analysis to streamline qu
 - ⚡ **Fast & Modern** - Built with FastAPI and async Python
 - 🎨 **Beautiful UI** - Tailwind CSS with Chart.js visualizations
 - 🐳 **Docker Ready** - Easy deployment with Docker Compose
-- ✅ **Well Tested** - 254 comprehensive tests (unit + integration)
+- ✅ **Well Tested** - 265 comprehensive tests (unit + integration)
 - 📝 **Type Safe** - Full type hints with Pydantic validation
 
 ---
@@ -51,9 +51,11 @@ The platform combines conversational AI with automated analysis to streamline qu
 | **Database** | PostgreSQL, SQLAlchemy 2.0, Alembic |
 | **Authentication** | Server-side sessions, Argon2 password hashing |
 | **AI/LLM** | OpenAI API (GPT-4 / GPT-3.5-turbo) |
-| **Testing** | Pytest, HTTPX, pytest-asyncio (254 tests) |
-| **Code Quality** | Black, isort, Ruff, pre-commit hooks |
-| **Deployment** | Docker, Docker Compose |
+| **Testing** | Pytest, HTTPX, pytest-asyncio (265 tests, 74%+ coverage) |
+| **Code Quality** | Ruff, isort, pre-commit hooks |
+| **CI/CD** | GitHub Actions (separate CI/CD workflows) |
+| **Deployment** | Docker, Azure App Service, Azure Container Registry |
+| **Monitoring** | Prometheus, Grafana, Azure Application Insights |
 
 ---
 
@@ -388,7 +390,7 @@ InsightPilot/
 │   ├── middleware.py             # Custom middleware (request ID, logging)
 │   └── settings.py               # Configuration & environment variables
 │
-├── tests/                        # Test suite (254 tests)
+├── tests/                        # Test suite (265 tests)
 │   ├── auth/                     # Auth unit tests (38 tests)
 │   │   ├── test_sessions.py      # Session cookie tests
 │   │   └── test_dependencies.py  # Auth dependency tests
@@ -499,11 +501,11 @@ OPENAI_API_KEY=sk-your-openai-api-key-here
 
 ## 🧪 Testing
 
-The project includes comprehensive test coverage across **254 tests** covering unit tests, integration tests, and end-to-end workflows.
+The project includes comprehensive test coverage across **265 tests** covering unit tests, integration tests, and end-to-end workflows, with **74%+ code coverage**.
 
 ### Test Architecture
 
-- **Unit Tests (154 tests)** - Test individual functions in isolation (CRUD operations, auth utilities)
+- **Unit Tests (163 tests)** - Test individual functions in isolation (CRUD operations, auth utilities)
 - **Integration Tests (100 tests)** - Test API endpoints and full request/response cycles
 - **End-to-End Tests** - Test complete user workflows (authentication, interview flows)
 
@@ -567,9 +569,9 @@ pytest tests/test_health.py -v
 
 ### Test Coverage Breakdown
 
-**Total: 254 tests passing** ✅
+**Total: 265 tests passing** ✅
 
-#### Unit Tests (154 tests)
+#### Unit Tests (163 tests)
 
 **CRUD Operations** (116 tests)
 - User management: 13 tests
@@ -610,14 +612,14 @@ pytest tests/test_health.py -v
 The project uses several tools to maintain code quality:
 
 ```bash
-# Format code with Black (line length: 100)
-black app tests
+# Lint with Ruff
+ruff check app tests
+
+# Format code with Ruff
+ruff format app tests
 
 # Sort imports with isort
 isort app tests
-
-# Lint with Ruff
-ruff check app tests
 
 # Run all checks with pre-commit
 pre-commit run --all-files
@@ -639,9 +641,9 @@ git commit --no-verify
 ```
 
 Configured hooks:
-- **black** - Code formatting
+- **ruff** - Fast Python linter with auto-fix
+- **ruff-format** - Code formatting (replaces Black)
 - **isort** - Import sorting
-- **ruff** - Fast Python linter
 - **trailing-whitespace** - Remove trailing whitespace
 - **end-of-file-fixer** - Ensure files end with newline
 - **check-yaml** - Validate YAML files
@@ -1046,16 +1048,27 @@ pytest -v
 - **Type Hints**: Use type hints everywhere for better IDE support
 - **Pre-commit**: Install hooks to catch issues early
 
+### Production Deployment
+
+The application is deployed to **Azure App Service** with full CI/CD automation:
+
+- **Live URL**: https://azgonc-insightpilot.azurewebsites.net
+- **CI/CD**: GitHub Actions with separate CI and CD workflows
+- **Container Registry**: Azure Container Registry (ACR)
+- **Database**: Azure Database for PostgreSQL (Flexible Server)
+- **Monitoring**: Azure Application Insights + Prometheus metrics at `/metrics`
+
+For detailed deployment information, see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ### Production Considerations
 
 - **Environment**: Set `APP_ENV=prod`
 - **Secret Key**: Use strong, unique secret key
-- **Database**: Use managed PostgreSQL service
-- **Backups**: Set up automated database backups
-- **Monitoring**: Add application monitoring (Sentry, etc.)
-- **HTTPS**: Use reverse proxy (nginx) with SSL certificate
-- **Rate Limiting**: Add rate limiting for API endpoints
-- **Scaling**: Use multiple uvicorn workers
+- **Database**: Use managed PostgreSQL service with SSL
+- **Monitoring**: Prometheus metrics exposed at `/metrics`, Azure Application Insights for APM
+- **Health Checks**: `/healthz` endpoint for load balancer and orchestration
+- **HTTPS**: Enabled by default on Azure App Service
+- **Scaling**: Azure App Service supports horizontal and vertical scaling
 
 ---
 
