@@ -1,5 +1,8 @@
 # InsightPilot
 
+[![CI](https://github.com/AnzeZg/InsightPilot/actions/workflows/ci.yml/badge.svg)](https://github.com/AnzeZg/InsightPilot/actions/workflows/ci.yml)
+[![CD](https://github.com/AnzeZg/InsightPilot/actions/workflows/cd.yml/badge.svg)](https://github.com/AnzeZg/InsightPilot/actions/workflows/cd.yml)
+
 An AI-powered market research platform that conducts intelligent interviews with participants and automatically generates actionable insights for researchers.
 
 ## 📖 Overview
