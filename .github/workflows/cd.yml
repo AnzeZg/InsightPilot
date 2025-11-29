@@ -114,6 +114,8 @@ jobs:
     name: Deploy to Azure
     runs-on: ubuntu-latest
     needs: build
+    # Only deploy on push to main, not on PRs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
       url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
@@ -173,6 +175,11 @@ jobs:
                 "name": "APPINSIGHTS_INSTRUMENTATION_KEY",
                 "value": "${{ secrets.APPINSIGHTS_INSTRUMENTATION_KEY }}",
                 "slotSetting": false
+              },
+              {
+                "name": "APPINSIGHTS_INSTRUMENTATION_KEY",
+                "value": "${{ secrets.APPINSIGHTS_INSTRUMENTATION_KEY }}",
+                "slotSetting": false
               }
             ]
 
@@ -211,6 +218,8 @@ jobs:
     name: Post-Deployment Validation
     runs-on: ubuntu-latest
     needs: deploy
+    # Only run after successful deployment (main branch only)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Test API documentation

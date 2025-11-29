@@ -8,6 +8,13 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.metrics import (
+    http_request_duration_seconds,
+    http_request_size_bytes,
+    http_requests_total,
+    http_response_size_bytes,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,5 +54,58 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
             f"method={request.method} | path={request.url.path} | "
             f"status={response.status_code} | duration={duration_ms:.2f}ms"
         )
+
+        return response
+
+
+class MetricsMiddleware(BaseHTTPMiddleware):
+    """Middleware to collect Prometheus metrics for requests."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        # Skip metrics collection for metrics endpoint itself
+        if request.url.path == "/metrics":
+            return await call_next(request)
+
+        # Get endpoint path (template, not actual path)
+        endpoint = request.url.path
+        method = request.method
+
+        # Track request size
+        content_length = request.headers.get("content-length")
+        if content_length:
+            http_request_size_bytes.labels(method=method, endpoint=endpoint).observe(
+                int(content_length)
+            )
+
+        # Track request duration
+        start_time = time.time()
+
+        try:
+            response: Response = await call_next(request)
+            status_code = response.status_code
+        except Exception as exc:
+            # Record error metrics
+            status_code = 500
+            logger.error(f"Request failed: {exc}")
+            raise
+        finally:
+            # Record duration
+            duration = time.time() - start_time
+            http_request_duration_seconds.labels(method=method, endpoint=endpoint).observe(duration)
+
+            # Record request count
+            http_requests_total.labels(
+                method=method, endpoint=endpoint, status_code=status_code
+            ).inc()
+
+        # Track response size
+        response_content_length = response.headers.get("content-length")
+        if response_content_length:
+            http_response_size_bytes.labels(method=method, endpoint=endpoint).observe(
+                int(response_content_length)
+            )
+
+        # Add response time header for debugging
+        response.headers["X-Response-Time"] = f"{duration:.3f}s"
 
         return response
