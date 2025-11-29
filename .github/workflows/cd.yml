@@ -1,15 +1,13 @@
-name: Build, Test & Deploy to Azure
+name: CD - Build & Deploy to Azure
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
       - 'README.md'
       - 'docs/**'
       - '.gitignore'
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: '3.13'
@@ -18,11 +16,9 @@ env:
   ACR_LOGIN_SERVER: azgoncinsightpilotacr.azurecr.io
 
 jobs:
-  # ============================================================================
-  # JOB 1: CODE QUALITY & TESTING
-  # ============================================================================
+  # Run tests first to ensure code quality before deploying
   test:
-    name: Code Quality & Tests
+    name: Lint & Test
     runs-on: ubuntu-latest
 
     steps:
@@ -41,19 +37,13 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run Ruff linter
-        run: |
-          echo "Running Ruff linter..."
-          ruff check app/ tests/ --output-format=github
+        run: ruff check app/ tests/ --output-format=github
 
-      - name: Check Black formatting
-        run: |
-          echo "Checking code formatting..."
-          black app/ tests/ --check
+      - name: Check Ruff formatting
+        run: ruff format app/ tests/ --check
 
       - name: Check import sorting
-        run: |
-          echo "Checking import sorting..."
-          isort app/ tests/ --check
+        run: isort app/ tests/ --check
 
       - name: Run tests with coverage
         env:
@@ -64,9 +54,7 @@ jobs:
           pytest \
             --cov=app \
             --cov-report=xml:coverage.xml \
-            --cov-report=html:htmlcov \
             --cov-report=term \
-            --junitxml=test-results.xml \
             -v
 
       - name: Check coverage threshold (70%)
@@ -79,30 +67,10 @@ jobs:
           fi
           echo "✅ Coverage meets threshold"
 
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: |
-            coverage.xml
-            htmlcov/
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: test-results.xml
-
-  # ============================================================================
-  # JOB 2: BUILD & PUSH DOCKER IMAGE
-  # ============================================================================
   build:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     outputs:
       image-tag: ${{ steps.meta.outputs.tags }}
@@ -127,9 +95,8 @@ jobs:
         with:
           images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.DOCKER_IMAGE_NAME }}
           tags: |
-            type=sha,prefix={{branch}}-,format=short
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=branch
+            type=sha,format=short
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -143,9 +110,6 @@ jobs:
           build-args: |
             BUILD_DATE=${{ github.run_number }}
 
-  # ============================================================================
-  # JOB 3: DEPLOY TO AZURE APP SERVICE
-  # ============================================================================
   deploy:
     name: Deploy to Azure
     runs-on: ubuntu-latest
@@ -204,6 +168,11 @@ jobs:
               {
                 "name": "ENVIRONMENT",
                 "value": "production"
+              },
+              {
+                "name": "APPINSIGHTS_INSTRUMENTATION_KEY",
+                "value": "${{ secrets.APPINSIGHTS_INSTRUMENTATION_KEY }}",
+                "slotSetting": false
               }
             ]
 
@@ -213,7 +182,7 @@ jobs:
           app-name: ${{ env.AZURE_WEBAPP_NAME }}
           images: ${{ env.ACR_LOGIN_SERVER }}/${{ env.DOCKER_IMAGE_NAME }}:latest
 
-      - name: Wait for deployment
+      - name: Wait for deployment to stabilize
         run: sleep 30
 
       - name: Health check
@@ -238,24 +207,21 @@ jobs:
           echo "❌ Health check failed after $max_attempts attempts"
           exit 1
 
-  # ============================================================================
-  # JOB 4: SMOKE TESTS
-  # ============================================================================
   smoke-tests:
     name: Post-Deployment Validation
     runs-on: ubuntu-latest
     needs: deploy
 
     steps:
-      - name: Test health endpoint
+      - name: Test API documentation
         run: |
-          echo "Testing health endpoint..."
-          curl -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/healthz
+          echo "Testing API docs endpoint..."
+          curl -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/docs
 
-      - name: Test main page loads
+      - name: Test OpenAPI schema
         run: |
-          echo "Testing main page..."
-          curl -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/
+          echo "Testing OpenAPI schema..."
+          curl -f https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net/openapi.json
 
       - name: All smoke tests passed
         run: echo "✅ All smoke tests passed!"
